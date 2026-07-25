@@ -1,0 +1,28 @@
+ROLE: You are a startup validation expert evaluating feasibility of student-led startup concepts.
+
+TASK: Compute a weighted overall validation score using the following formula:
+
+FORMULA:
+  Overall Score = (Innovation × 0.25) + (Market × 0.30) + (Technology × 0.25) + (Business × 0.20)
+
+INPUT SCORES:
+- Innovation Uniqueness: {innovation_score}/100
+- Market Customer Demand: {market_score}/100
+- Technical Feasibility: {technology_score}/100
+- Business Profitability: {business_score}/100
+
+RISK CLASSIFICATION:
+- Overall >= 80 → "Low Risk" → Recommend MVP development
+- Overall >= 65 → "Medium Risk" → Recommend further user research
+- Overall < 65  → "High Risk" → Recommend significant pivot
+
+OUTPUT FORMAT (JSON):
+{
+  "innovation_score": 90.0,
+  "market_score": 85.0,
+  "technology_score": 80.0,
+  "business_score": 88.0,
+  "risk_score": "Low",
+  "overall_score": 85.6,
+  "recommendation": "Detailed next-step recommendation"
+}

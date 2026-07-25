@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Idea Generator - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="glass-card p-4 p-md-5 mb-4 animate-fade-in">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="stat-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <h3 class="fw-bold mb-0">AI Startup Idea Generator Wizard</h3>
+                        <p class="text-muted fs-6 mb-0">Fill in optional preferences or leave blank for instant AI recommendations</p>
+                    </div>
+                </div>
+
+                <form id="idea-gen-form">
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 mb-2 border-bottom pb-2">
+                            <h5 class="fw-bold text-primary"><i class="fa-solid fa-sliders me-2"></i>Startup Preferences (Optional)</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Area of Interest / Domain</label>
+                            <input type="text" id="domain" class="form-control form-control-glass" placeholder="e.g. Healthcare, Agriculture, EdTech, Fintech, AI (Optional)">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Budget</label>
+                            <input type="text" id="budget" class="form-control form-control-glass" placeholder="e.g. ₹5,00,000 or ₹10 Lakhs (Optional)">
+
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Target Customers</label>
+                            <input type="text" id="target_customers" class="form-control form-control-glass" placeholder="e.g. Farmers, Hospitals, College Students (Optional)">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Preferred Business Type</label>
+                            <select id="business_type" class="form-select form-select-glass">
+                                <option value="">AI Auto-Detect Business Type</option>
+                                <option value="SaaS">SaaS (Software as a Service)</option>
+                                <option value="Mobile App">Mobile App</option>
+                                <option value="Hardware">Hardware / IoT</option>
+                                <option value="Product">Physical Product</option>
+                                <option value="Service">Service</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Business Goal / Problem to Solve</label>
+                            <input type="text" id="goal" class="form-control form-control-glass" placeholder="e.g. Reduce water wastage, automate customer support (Optional)">
+                        </div>
+
+                        <div class="col-12 mt-3 mb-2 border-bottom pb-2">
+                            <h5 class="fw-bold text-muted"><i class="fa-solid fa-user-gear me-2"></i>Skills & Location (Optional)</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Existing Skills</label>
+                            <input type="text" id="skills" class="form-control form-control-glass" placeholder="e.g. Python, React, AI">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Preferred Technology</label>
+                            <input type="text" id="preferred_tech" class="form-control form-control-glass" placeholder="e.g. React, Flask, Embedded C">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Location</label>
+                            <input type="text" id="location" class="form-control form-control-glass" placeholder="e.g. India, Global, California">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="gen-btn" class="btn btn-gradient btn-lg w-100 py-3">
+                        <i class="fa-solid fa-brain me-2"></i> Launch Multi-Agent AI Pipeline
+                    </button>
+                </form>
+
+                <!-- Processing Animation Modal / Box -->
+                <div id="ai-loading-box" class="d-none mt-4 p-4 glass-card text-center border-primary">
+                    <div class="loading-spinner mb-3" style="width:36px; height:36px; border-width:4px;"></div>
+                    <h5 class="fw-bold text-gradient mb-3">AI Multi-Agent Pipeline Working...</h5>
+                    <ul class="list-unstyled text-start d-inline-block text-muted fs-6">
+                        <li id="step-1" class="mb-1"><i class="fa-solid fa-spinner fa-spin me-2 text-primary"></i> 1. Understanding Student Background & Domain...</li>
+                        <li id="step-2" class="mb-1 opacity-50"><i class="fa-solid fa-clock me-2"></i> 2. Searching Global Market Trends & Sizing...</li>
+                        <li id="step-3" class="mb-1 opacity-50"><i class="fa-solid fa-clock me-2"></i> 3. Identifying Competitor Strengths & Market Gaps...</li>
+                        <li id="step-4" class="mb-1 opacity-50"><i class="fa-solid fa-clock me-2"></i> 4. Computing Feasibility & Business Canvas...</li>
+                        <li id="step-5" class="opacity-50"><i class="fa-solid fa-clock me-2"></i> 5. Compiling Investor Report & Pitch Content...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Output Generated Ideas Section -->
+            <div id="idea-output-card" class="d-none animate-fade-in mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold text-gradient mb-1"><i class="fa-solid fa-lightbulb me-2 text-warning"></i> AI Generated Startup Ideas</h3>
+                        <p class="text-muted fs-6 mb-0">Select any of the 3 ideas below to preview full details and set it as your active project.</p>
+                    </div>
+                    <span class="badge bg-success text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-check-double me-1"></i> Multi-Agent Pipeline Done</span>
+                </div>
+
+                <!-- 3 Idea Cards Row -->
+                <div class="row g-4 mb-4" id="ideas-cards-container">
+                    <!-- Dynamic JavaScript Rendering of 3 Cards -->
+                </div>
+
+                <!-- Detailed Validation & AI Suggestions Box -->
+                <div id="deep-dive-box" class="glass-card p-4 p-md-5 border-primary animate-fade-in">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 border-bottom pb-3">
+                        <div>
+                            <span class="badge bg-primary px-3 py-1 mb-2">Selected Concept Deep Dive</span>
+                            <h4 id="deep-idea-title" class="fw-extrabold mb-0 text-primary">--</h4>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="btn-activate-selected" class="btn btn-gradient btn-md" onclick="saveSelectedIdea()">
+                                <i class="fa-solid fa-circle-check me-1"></i> Save & Activate This Idea
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <!-- Skill Gap Breakdown -->
+                        <div class="col-md-6">
+                            <div class="glass-card p-3 h-100 border-info">
+                                <h6 class="fw-bold text-info mb-3"><i class="fa-solid fa-graduation-cap me-2"></i>Skill Gap Analysis</h6>
+                                <div id="skill-gap-content" class="fs-6 text-muted">
+                                    <!-- Dynamic skill gap content -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SWOT & AI Suggestions -->
+                        <div class="col-md-6">
+                            <div class="glass-card p-3 h-100 border-warning">
+                                <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-rocket me-2"></i>AI Suggestions & Next Steps</h6>
+                                <div id="swot-content" class="fs-6 text-muted">
+                                    <!-- Dynamic SWOT content -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{{ url_for('views.validation_score') }}" class="btn btn-outline-glass">
+                            <i class="fa-solid fa-award me-1"></i> Feasibility Score Breakdown
+                        </a>
+                        <a href="{{ url_for('views.business_model') }}" class="btn btn-outline-glass">
+                            <i class="fa-solid fa-table-cells me-1"></i> Business Canvas
+                        </a>
+                        <a href="{{ url_for('views.reports') }}" class="btn btn-gradient">
+                            <i class="fa-solid fa-download me-1"></i> Download PDF
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let lastGeneratedData = null;
+let currentSelectedIndex = 0;
+
+document.getElementById('idea-gen-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('gen-btn');
+    const loadingBox = document.getElementById('ai-loading-box');
+    const outputCard = document.getElementById('idea-output-card');
+
+    btn.disabled = true;
+    loadingBox.classList.remove('d-none');
+    outputCard.classList.add('d-none');
+
+    // Step animation indicators
+    setTimeout(() => { document.getElementById('step-2').className = 'mb-1 text-primary fw-bold'; }, 600);
+    setTimeout(() => { document.getElementById('step-3').className = 'mb-1 text-primary fw-bold'; }, 1200);
+    setTimeout(() => { document.getElementById('step-4').className = 'mb-1 text-primary fw-bold'; }, 1800);
+    setTimeout(() => { document.getElementById('step-5').className = 'text-primary fw-bold'; }, 2400);
+
+    const domain = document.getElementById('domain').value.trim();
+    const budget = document.getElementById('budget').value.trim();
+    const target_customers = document.getElementById('target_customers').value.trim();
+    const business_type = document.getElementById('business_type').value;
+    const goal = document.getElementById('goal').value.trim();
+    const skills = document.getElementById('skills').value.trim();
+    const preferred_tech = document.getElementById('preferred_tech').value.trim();
+    const location = document.getElementById('location').value.trim();
+
+    try {
+        const res = await API.post('/api/v1/generate-idea', { domain, budget, target_customers, business_type, goal, skills, preferred_tech, location });
+        loadingBox.classList.add('d-none');
+        btn.disabled = false;
+
+        if (res.status === 'success') {
+            lastGeneratedData = res;
+            if (res.startup_id) {
+                setActiveStartupId(res.startup_id);
+            }
+            renderIdeas(res.ideas);
+            selectIdea(0);
+            outputCard.classList.remove('d-none');
+            showAlert('3 AI Startup Ideas generated! Click any idea card to preview or activate it.', 'success');
+        } else {
+            showAlert(res.error || 'Pipeline execution error.', 'danger');
+        }
+    } catch (err) {
+        loadingBox.classList.add('d-none');
+        btn.disabled = false;
+        showAlert('Network error executing AI Pipeline.', 'danger');
+    }
+});
+
+function renderIdeas(ideas) {
+    const container = document.getElementById('ideas-cards-container');
+    container.innerHTML = '';
+
+    ideas.forEach((idea, index) => {
+        const skillMatch = idea.skill_gap ? idea.skill_gap.match_percentage : (index === 0 ? 88 : (index === 1 ? 75 : 82));
+        const matching = idea.skill_gap && idea.skill_gap.matching_skills ? idea.skill_gap.matching_skills.join(', ') : 'Modern Web Stack';
+        const missing = idea.skill_gap && idea.skill_gap.missing_skills ? idea.skill_gap.missing_skills.join(', ') : 'Advanced AI Agentic Workflows';
+        const isSelected = index === currentSelectedIndex;
+
+        const cardHtml = `
+            <div class="col-md-4">
+                <div id="idea-card-${index}" class="glass-card p-4 h-100 position-relative ${isSelected ? 'border-primary shadow-glow' : 'border-glass'} hover-elevate" style="cursor:pointer;" onclick="selectIdea(${index})">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge ${isSelected ? 'bg-primary' : 'bg-secondary'} text-white">Idea ${index + 1}</span>
+                        <span class="badge bg-success-subtle text-success border border-success fw-bold">${idea.innovation_score || 90}/100 Score</span>
+                    </div>
+                    <h5 class="fw-bold text-gradient mb-1">${idea.startup_name}</h5>
+                    <p class="text-muted fs-7 italic mb-3">${idea.tagline || 'AI Powered Innovation'}</p>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-semibold text-danger fs-7 mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i>Problem:</h6>
+                        <div class="fs-7 text-muted mb-2">${formatAIContent(idea.problem)}</div>
+                        
+                        <h6 class="fw-semibold text-success fs-7 mb-1"><i class="fa-solid fa-lightbulb me-1"></i>Solution:</h6>
+                        <div class="fs-7 text-muted mb-2">${formatAIContent(idea.solution)}</div>
+                    </div>
+
+                    <div class="pt-2 border-top">
+                        <div class="d-flex justify-content-between fs-7 mb-1">
+                            <span class="fw-semibold text-primary">Skill Match:</span>
+                            <span class="fw-bold text-success">${skillMatch}%</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: ${skillMatch}%"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-sm ${isSelected ? 'btn-gradient' : 'btn-outline-glass'} w-100 mt-3" onclick="event.stopPropagation(); selectIdea(${index});">
+                        <i class="fa-solid ${isSelected ? 'fa-check-circle' : 'fa-eye'} me-1"></i> ${isSelected ? 'Selected' : 'View & Select Idea'}
+                    </button>
+                </div>
+            </div>
+        `;
+        container.innerHTML += cardHtml;
+    });
+}
+
+function selectIdea(index) {
+    if (!lastGeneratedData || !lastGeneratedData.ideas || !lastGeneratedData.ideas[index]) return;
+    currentSelectedIndex = index;
+    const idea = lastGeneratedData.ideas[index];
+
+    // Highlight selected card
+    lastGeneratedData.ideas.forEach((_, idx) => {
+        const el = document.getElementById(`idea-card-${idx}`);
+        if (el) {
+            if (idx === index) {
+                el.className = 'glass-card p-4 h-100 position-relative border-primary shadow-glow hover-elevate';
+            } else {
+                el.className = 'glass-card p-4 h-100 position-relative border-glass hover-elevate';
+            }
+        }
+    });
+
+    document.getElementById('deep-idea-title').innerText = idea.startup_name + " — " + (idea.tagline || idea.solution);
+
+    // Skill Gap text
+    let skillGapHtml = `
+        <p class="mb-1"><strong>Required Technology Stack:</strong> ${idea.technology || 'Python, React, Web APIs'}</p>
+        <p class="text-success mb-1"><strong><i class="fa-solid fa-check-circle me-1"></i>Matching Skills:</strong> ${idea.skill_gap && idea.skill_gap.matching_skills && idea.skill_gap.matching_skills.length ? idea.skill_gap.matching_skills.join(', ') : 'Web Development, API Integration'}</p>
+        <p class="text-warning mb-2"><strong><i class="fa-solid fa-exclamation-triangle me-1"></i>Skills to Acquire:</strong> ${idea.skill_gap && idea.skill_gap.missing_skills && idea.skill_gap.missing_skills.length ? idea.skill_gap.missing_skills.join(', ') : 'Advanced AI Model Fine-Tuning'}</p>
+    `;
+    if (idea.skill_gap && idea.skill_gap.analysis_markdown) {
+        skillGapHtml += `<hr/><div class="fs-7">${formatAIContent(idea.skill_gap.analysis_markdown)}</div>`;
+    }
+    document.getElementById('skill-gap-content').innerHTML = skillGapHtml;
+
+    // SWOT text
+    let swotHtml = lastGeneratedData.swot ? formatAIContent(lastGeneratedData.swot) : 'Detailed AI Recommendations available in report.';
+    document.getElementById('swot-content').innerHTML = swotHtml;
+
+    document.getElementById('deep-dive-box').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function saveSelectedIdea() {
+    if (!lastGeneratedData || !lastGeneratedData.ideas || !lastGeneratedData.ideas[currentSelectedIndex]) {
+        showAlert('No idea selected.', 'warning');
+        return;
+    }
+
+    const selectedIdea = lastGeneratedData.ideas[currentSelectedIndex];
+    const domain = document.getElementById('domain').value.trim() || selectedIdea.domain || 'Technology';
+    const budget = document.getElementById('budget').value.trim() || '50000';
+    const target_customers = document.getElementById('target_customers').value.trim() || selectedIdea.target_customer;
+    const business_type = document.getElementById('business_type').value;
+    const goal = document.getElementById('goal').value.trim() || selectedIdea.problem;
+
+    try {
+        showAlert(`Saving '${selectedIdea.startup_name}' as active project...`, 'info');
+        const res = await API.post('/api/v1/select-idea', {
+            idea: selectedIdea,
+            domain,
+            budget,
+            target_customers,
+            business_type,
+            goal
+        });
+
+        if (res.status === 'success') {
+            setActiveStartupId(res.startup_id);
+            showAlert(`Idea '${res.startup_name}' saved as active project!`, 'success');
+            setTimeout(() => {
+                window.location.href = `/validation-score?startup_id=${res.startup_id}`;
+            }, 1000);
+        } else {
+            showAlert(res.error || 'Failed to save selected idea.', 'danger');
+        }
+    } catch (e) {
+        console.error(e);
+        showAlert('Error saving selected idea.', 'danger');
+    }
+}
+</script>
+{% endblock %}
+

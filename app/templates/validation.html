@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Validation Score - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div id="active-startup-header-container"></div>
+
+    <div class="glass-card p-4 p-md-5 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-award text-primary me-2"></i>Startup Feasibility & Validation Score</h3>
+                <p class="text-muted fs-6 mb-0">Blueprint Weighted Formula: Overall = (Innov × 25%) + (Market × 30%) + (Tech × 25%) + (Biz × 20%)</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge badge-score fs-5 px-3 py-2" id="val-overall-badge">86.15 / 100</span>
+                <button class="btn btn-gradient btn-sm" onclick="downloadStartupReport()">
+                    <i class="fa-solid fa-download me-1"></i> Download Report
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-center mb-4">
+            <div class="col-lg-6">
+                <div class="glass-card p-4 text-center">
+                    <h5 class="fw-bold mb-3">Weighted Parameter Breakdown</h5>
+                    <canvas id="validation-radar-canvas" height="240"></canvas>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="glass-card p-4">
+                    <h5 class="fw-bold mb-3">Detailed Metrics Scorecard</h5>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-medium">Innovation Uniqueness (25%)</span>
+                            <span class="fw-bold text-primary" id="val-innov-val">90%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary" id="val-innov-bar" style="width: 90%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-medium">Market Customer Demand (30%)</span>
+                            <span class="fw-bold text-success" id="val-mkt-val">85%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="val-mkt-bar" style="width: 85%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-medium">Technical Possibility (25%)</span>
+                            <span class="fw-bold text-info" id="val-tech-val">80%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" id="val-tech-bar" style="width: 80%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-medium">Business Profitability (20%)</span>
+                            <span class="fw-bold text-warning" id="val-biz-val">88%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" id="val-biz-bar" style="width: 88%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 glass-card bg-secondary-subtle rounded-3 mt-4">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="fa-solid fa-shield-halved text-success"></i>
+                            <span class="fw-bold fs-6">Risk Assessment: <span id="val-risk-text" class="text-success">Low Risk</span></span>
+                        </div>
+                        <p id="val-rec-text" class="text-muted fs-7 mb-2">Recommendation: Proceed directly to MVP development and college incubation pitch.</p>
+                        
+                        <div class="border-top pt-2 mt-2">
+                            <h6 class="fw-bold text-primary fs-7 mb-1"><i class="fa-solid fa-circle-info me-1"></i>Score Summary & Explanation (2-Line Simple Rationale):</h6>
+                            <div id="val-explanation-text" class="text-muted fs-7">
+                                Loading score rationale explanation...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    renderStartupSelectorHeader('active-startup-header-container', (selectedId) => {
+        loadValidationData(selectedId);
+    });
+    loadValidationData(getActiveStartupId());
+});
+
+async function loadValidationData(startupId) {
+    try {
+        if (!startupId) {
+            const ideasRes = await API.get('/api/v1/ideas');
+            if (ideasRes.status === 'success' && ideasRes.ideas.length > 0) {
+                startupId = ideasRes.ideas[0].id;
+            } else return;
+        }
+
+        const res = await API.get(`/api/v1/validation-result/${startupId}`);
+        if (res.status === 'success') {
+            const v = res.validation || res.validation_result || res;
+            const innov = v.innovation_score || 90;
+            const mkt = v.market_score || 85;
+            const tech = v.technology_score || 80;
+            const biz = v.business_score || 88;
+            const overall = v.overall_score || 86.15;
+
+            document.getElementById('val-overall-badge').innerText = `${overall} / 100`;
+            document.getElementById('val-innov-val').innerText = `${innov}%`;
+            document.getElementById('val-innov-bar').style.width = `${innov}%`;
+
+            document.getElementById('val-mkt-val').innerText = `${mkt}%`;
+            document.getElementById('val-mkt-bar').style.width = `${mkt}%`;
+
+            document.getElementById('val-tech-val').innerText = `${tech}%`;
+            document.getElementById('val-tech-bar').style.width = `${tech}%`;
+
+            document.getElementById('val-biz-val').innerText = `${biz}%`;
+            document.getElementById('val-biz-bar').style.width = `${biz}%`;
+
+            document.getElementById('val-risk-text').innerText = v.risk_score || 'Low Risk';
+            document.getElementById('val-rec-text').innerText = `Recommendation: ${v.recommendation || 'Proceed directly to MVP development.'}`;
+            
+            const explanation = v.explanation || `1. Feasibility rating of ${overall}/100 based on high innovation (${innov}%) and market demand (${mkt}%).\n2. Technical complexity is manageable (${tech}%), enabling immediate MVP execution.`;
+            document.getElementById('val-explanation-text').innerHTML = formatAIContent(explanation);
+
+            renderValidationChart('validation-radar-canvas', {
+                innovation: innov,
+                market: mkt,
+                technology: tech,
+                business: biz
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        renderValidationChart('validation-radar-canvas', { innovation: 90, market: 85, technology: 80, business: 88 });
+    }
+}
+</script>
+{% endblock %}
+

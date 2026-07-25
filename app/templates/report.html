@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Startup PDF Reports - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="glass-card p-4 p-md-5 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Download Investor PDF Reports</h3>
+                <p class="text-muted fs-6 mb-0">Compiled ReportLab PDF startup reports with validation radar, Business Model Canvas, and financial ROI math</p>
+            </div>
+            <button id="gen-report-btn" class="btn btn-gradient">
+                <i class="fa-solid fa-file-circle-plus me-1"></i> Generate New Report
+            </button>
+        </div>
+
+        <!-- Reports List -->
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-folder-open me-2 text-primary"></i>Available PDF Reports</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Startup & Report Name</th>
+                            <th>Domain</th>
+                            <th>Format</th>
+                            <th>Status</th>
+                            <th>Download Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-table-body">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Loading your generated PDF reports...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadUserReports();
+});
+
+async function loadUserReports() {
+    const tbody = document.getElementById('reports-table-body');
+    try {
+        const res = await API.get('/api/v1/user-reports');
+        if (res.status === 'success' && res.reports.length > 0) {
+            tbody.innerHTML = res.reports.map(r => `
+                <tr>
+                    <td class="fw-bold text-gradient">
+                        <i class="fa-solid fa-file-pdf text-danger me-2"></i> ${r.report_name}
+                        <div class="fs-7 text-muted fw-normal">Project: ${r.startup_name}</div>
+                    </td>
+                    <td><span class="badge bg-secondary">${r.domain}</span></td>
+                    <td><span class="badge bg-danger-subtle text-danger border border-danger">${r.report_type}</span></td>
+                    <td><span class="badge bg-success-subtle text-success border border-success">${r.has_report ? 'Compiled & Ready' : 'Ready to Compile'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-gradient" onclick="downloadStartupReport(${r.startup_id})">
+                            <i class="fa-solid fa-download me-1"></i> Download PDF
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No reports generated yet. Click "Generate New Report" or create a startup idea first!
+                    </td>
+                </tr>
+            `;
+        }
+    } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error loading reports.</td></tr>';
+    }
+}
+
+document.getElementById('gen-report-btn').addEventListener('click', async () => {
+    const activeId = getActiveStartupId();
+    if (activeId) {
+        downloadStartupReport(activeId);
+    } else {
+        try {
+            const res = await API.get('/api/v1/ideas');
+            if (res.status === 'success' && res.ideas.length > 0) {
+                downloadStartupReport(res.ideas[0].id);
+            } else {
+                showAlert('No startup projects found. Please create an idea first!', 'warning');
+            }
+        } catch (e) {
+            showAlert('Failed to locate active startup.', 'danger');
+        }
+    }
+});
+</script>
+{% endblock %}

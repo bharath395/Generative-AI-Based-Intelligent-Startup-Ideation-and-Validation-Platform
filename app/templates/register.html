@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="glass-card p-4 p-md-5 animate-fade-in">
+                <div class="text-center mb-4">
+                    <i class="fa-solid fa-user-plus text-gradient display-4 mb-2"></i>
+                    <h3 class="fw-bold">Create Student Account</h3>
+                    <p class="text-muted fs-6">Join the AI Startup Ideation & Validation Network</p>
+                </div>
+
+                <form id="register-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Full Name</label>
+                        <input type="text" id="name" class="form-control form-control-glass" placeholder="Alex Dev" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Email Address</label>
+                        <input type="email" id="email" class="form-control form-control-glass" placeholder="student@gmail.com" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Department / Branch</label>
+                        <select id="department" class="form-select form-select-glass">
+                            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
+                            <option value="Electronics & Communication">Electronics & Communication</option>
+                            <option value="Mechanical / Robotics">Mechanical / Robotics</option>
+                            <option value="Business & Entrepreneurship">Business & Entrepreneurship</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Technical Skills & Knowledge</label>
+                        <input type="text" id="skills" class="form-control form-control-glass" placeholder="Python, Machine Learning, Web Dev, IoT">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Startup Interest Area</label>
+                        <input type="text" id="interest" class="form-control form-control-glass" placeholder="Agritech, Healthcare AI, EdTech">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Password</label>
+                        <input type="password" id="password" class="form-control form-control-glass" placeholder="••••••••" required onkeyup="checkPasswordStrengthUI(this.value)">
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div id="password-strength-bar" class="progress-bar" role="progressbar"></div>
+                        </div>
+                        <small id="password-strength-text" class="text-muted fs-7"></small>
+                    </div>
+
+                    <button type="submit" id="reg-btn" class="btn btn-gradient w-100 py-2 mt-3">
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted fs-7 mb-0">Already registered? <a href="{{ url_for('views.login') }}" class="text-gradient fw-bold">Sign in here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('reg-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const department = document.getElementById('department').value;
+    const skills = document.getElementById('skills').value.trim();
+    const interest = document.getElementById('interest').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+        const res = await API.post('/api/v1/register', { name, email, department, skills, interest, password });
+        if (res.status === 'success') {
+            showAlert('Account created successfully! Redirecting to dashboard...', 'success');
+            setTimeout(() => { window.location.href = "{{ url_for('views.dashboard') }}"; }, 800);
+        } else {
+            showAlert(res.error || 'Registration failed.', 'danger');
+            btn.disabled = false;
+            btn.innerText = 'Create Account';
+        }
+    } catch (err) {
+        showAlert('Network error during registration.', 'danger');
+        btn.disabled = false;
+        btn.innerText = 'Create Account';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}Competitor Matrix - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div id="active-startup-header-container"></div>
+
+    <div class="glass-card p-4 p-md-5 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-users-viewfinder text-primary me-2"></i>Competitor Matrix & Market Gap Finder</h3>
+                <p class="text-muted fs-6 mb-0">Automated competitor research identifying strengths, weaknesses, and key market differentiators</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-glass btn-sm" onclick="openAddCompetitorModal()">
+                    <i class="fa-solid fa-plus me-1"></i> Add / Edit Competitor
+                </button>
+                <button class="btn btn-gradient btn-sm" onclick="downloadStartupReport()">
+                    <i class="fa-solid fa-download me-1"></i> Download PDF Report
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="fa-solid fa-table me-2 text-primary"></i>Competitive Intelligence Comparison</h5>
+                <button class="btn btn-sm btn-gradient" onclick="openAddCompetitorModal()">
+                    <i class="fa-solid fa-user-plus me-1"></i> Add Competitor
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Product Name</th>
+                            <th>Key Strength</th>
+                            <th>Weakness / Market Gap</th>
+                            <th>Pricing</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="competitors-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">Loading competitor analysis...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-2"><i class="fa-solid fa-key me-2 text-warning"></i>Identified Market Opportunities & Unserved Gaps</h5>
+            <div id="market-gaps-container">
+                <ul class="text-muted mb-0">
+                    <li class="mb-2"><strong>Affordable Pricing Gap:</strong> Existing enterprise products are far too expensive for university students and bootstrapped founders.</li>
+                    <li class="mb-2"><strong>Multi-Agent Automation:</strong> Competitors only offer simple single-prompt chatbots rather than dedicated AI specialist agent pipelines.</li>
+                    <li><strong>Incubator PDF Generation:</strong> Automated 1-click investor report compilation is absent in legacy tools.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Competitor Modal -->
+<div class="modal fade" id="competitorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-primary p-2">
+            <div class="modal-header border-0">
+                <h5 id="competitor-modal-title" class="modal-title fw-bold text-gradient"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Add Competitor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="comp-edit-id">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Company Name</label>
+                    <input type="text" id="comp-company-name" class="form-control form-control-glass" placeholder="e.g. Global Tech Solutions">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Product Name</label>
+                    <input type="text" id="comp-product-name" class="form-control form-control-glass" placeholder="e.g. Enterprise Suite Pro">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Key Strength</label>
+                    <input type="text" id="comp-strength" class="form-control form-control-glass" placeholder="e.g. High brand visibility">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Weakness / Market Gap</label>
+                    <input type="text" id="comp-weakness" class="form-control form-control-glass" placeholder="e.g. Expensive pricing, complex setup">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Pricing</label>
+                    <input type="text" id="comp-pricing" class="form-control form-control-glass" placeholder="e.g. $149/mo or Freemium">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-glass" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-gradient" onclick="saveCompetitor()">Save Competitor</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentCompetitorsList = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderStartupSelectorHeader('active-startup-header-container', (selectedId) => {
+        loadCompetitorsData(selectedId);
+    });
+    loadCompetitorsData(getActiveStartupId());
+});
+
+async function loadCompetitorsData(startupId) {
+    const tbody = document.getElementById('competitors-table-body');
+    try {
+        if (!startupId) {
+            const ideasRes = await API.get('/api/v1/ideas');
+            if (ideasRes.status === 'success' && ideasRes.ideas.length > 0) {
+                startupId = ideasRes.ideas[0].id;
+                setActiveStartupId(startupId);
+            } else return;
+        }
+
+        const res = await API.get(`/api/v1/competitors/${startupId}`);
+        if (res.status === 'success') {
+            currentCompetitorsList = res.competitors || [];
+            if (currentCompetitorsList.length > 0) {
+                let rowsHtml = currentCompetitorsList.map(c => `
+                    <tr>
+                        <td class="fw-bold text-gradient">${c.company_name}</td>
+                        <td>${c.product_name}</td>
+                        <td><span class="badge bg-success-subtle text-success border border-success p-2">${c.strength}</span></td>
+                        <td><span class="badge bg-danger-subtle text-danger border border-danger p-2">${c.weakness}</span></td>
+                        <td class="fw-semibold">${c.pricing}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-glass me-1" onclick="openEditCompetitorModal(${c.id})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCompetitorEntry(${c.id})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                rowsHtml += `
+                    <tr class="table-active border-primary">
+                        <td class="fw-bold text-primary"><i class="fa-solid fa-rocket me-1"></i> Your Selected Startup</td>
+                        <td class="fw-bold">AI Platform Solution</td>
+                        <td><span class="badge bg-primary text-white p-2">Generative AI Multi-Agent Engine</span></td>
+                        <td><span class="badge bg-info text-white p-2">First Mover & Incubator Ready</span></td>
+                        <td class="fw-bold text-success">Lean Seed MVP</td>
+                        <td class="text-end"><span class="badge bg-primary">Active</span></td>
+                    </tr>
+                `;
+
+                tbody.innerHTML = rowsHtml;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No competitors found. Click "Add Competitor" to create one.</td></tr>`;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function openAddCompetitorModal() {
+    document.getElementById('comp-edit-id').value = '';
+    document.getElementById('comp-company-name').value = '';
+    document.getElementById('comp-product-name').value = '';
+    document.getElementById('comp-strength').value = '';
+    document.getElementById('comp-weakness').value = '';
+    document.getElementById('comp-pricing').value = '';
+    document.getElementById('competitor-modal-title').innerHTML = `<i class="fa-solid fa-user-plus me-2 text-primary"></i>Add Competitor`;
+
+    const modal = new bootstrap.Modal(document.getElementById('competitorModal'));
+    modal.show();
+}
+
+function openEditCompetitorModal(id) {
+    const comp = currentCompetitorsList.find(c => c.id === id);
+    if (!comp) return;
+
+    document.getElementById('comp-edit-id').value = comp.id;
+    document.getElementById('comp-company-name').value = comp.company_name;
+    document.getElementById('comp-product-name').value = comp.product_name;
+    document.getElementById('comp-strength').value = comp.strength;
+    document.getElementById('comp-weakness').value = comp.weakness;
+    document.getElementById('comp-pricing').value = comp.pricing;
+    document.getElementById('competitor-modal-title').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Edit Competitor`;
+
+    const modal = new bootstrap.Modal(document.getElementById('competitorModal'));
+    modal.show();
+}
+
+async function saveCompetitor() {
+    const startupId = getActiveStartupId();
+    if (!startupId) {
+        showAlert('Please select an active startup project first.', 'warning');
+        return;
+    }
+
+    const editId = document.getElementById('comp-edit-id').value;
+    const company_name = document.getElementById('comp-company-name').value.trim();
+    const product_name = document.getElementById('comp-product-name').value.trim();
+    const strength = document.getElementById('comp-strength').value.trim();
+    const weakness = document.getElementById('comp-weakness').value.trim();
+    const pricing = document.getElementById('comp-pricing').value.trim();
+
+    if (!company_name) {
+        showAlert('Company name is required.', 'warning');
+        return;
+    }
+
+    const payload = { company_name, product_name, strength, weakness, pricing };
+
+    try {
+        let res;
+        if (editId) {
+            res = await API.put(`/api/v1/competitors/${startupId}/${editId}`, payload);
+        } else {
+            res = await API.post(`/api/v1/competitors/${startupId}`, payload);
+        }
+
+        if (res.status === 'success') {
+            showAlert(res.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('competitorModal')).hide();
+            loadCompetitorsData(startupId);
+        } else {
+            showAlert(res.error || 'Failed to save competitor.', 'danger');
+        }
+    } catch (e) {
+        console.error(e);
+        showAlert('Error saving competitor.', 'danger');
+    }
+}
+
+async function deleteCompetitorEntry(id) {
+    const startupId = getActiveStartupId();
+    if (!startupId || !confirm('Are you sure you want to delete this competitor entry?')) return;
+
+    try {
+        const res = await API.delete(`/api/v1/competitors/${startupId}/${id}`);
+        if (res.status === 'success') {
+            showAlert('Competitor deleted successfully.', 'success');
+            loadCompetitorsData(startupId);
+        } else {
+            showAlert(res.error || 'Failed to delete competitor.', 'danger');
+        }
+    } catch (e) {
+        console.error(e);
+        showAlert('Error deleting competitor.', 'danger');
+    }
+}
+</script>
+{% endblock %}

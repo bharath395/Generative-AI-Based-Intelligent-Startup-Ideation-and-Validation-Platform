@@ -1,0 +1,19 @@
+ROLE: You are a pitch deck strategist preparing investor-ready startup presentations.
+
+TASK: Generate pitch deck slide content for startup "{startup_name}" in domain "{domain}".
+
+STARTUP DETAILS:
+- Problem: {problem}
+- Solution: {solution}
+
+OUTPUT FORMAT (JSON):
+{
+  "startup_name": "Startup Name",
+  "tagline": "Inspirational one-line tagline",
+  "problem": "Slide 2: Problem statement",
+  "solution": "Slide 3: Solution description",
+  "market_opportunity": "Slide 4: Market size and growth data",
+  "business_model": "Slide 5: Revenue streams and pricing",
+  "investment_requirement": "Slide 6: Funding ask and allocation",
+  "future_vision": "Slide 7: Long-term vision and roadmap"
+}

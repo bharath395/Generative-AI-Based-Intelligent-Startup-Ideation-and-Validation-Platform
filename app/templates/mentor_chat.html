@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Startup Mentor Chat - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div id="active-startup-header-container"></div>
+
+    <div class="glass-card p-4 p-md-5 mb-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="stat-icon"><i class="fa-solid fa-comments text-primary"></i></div>
+            <div>
+                <h3 class="fw-bold mb-0">24/7 AI Startup Mentor Assistant</h3>
+                <p class="text-muted fs-6 mb-0">Ask questions about business models, pricing strategies, market validation, or technical stack options</p>
+            </div>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge bg-primary-subtle text-primary border border-primary p-2 cursor-pointer" onclick="sendQuickPrompt('How do I acquire my first 100 customers for this startup?')">💡 First 100 Customers</span>
+            <span class="badge bg-success-subtle text-success border border-success p-2 cursor-pointer" onclick="sendQuickPrompt('What pricing strategy works best for this business model?')">💰 Pricing Strategy</span>
+            <span class="badge bg-info-subtle text-info border border-info p-2 cursor-pointer" onclick="sendQuickPrompt('Draft a 1-minute elevator pitch email for university incubators.')">📩 Incubator Pitch Email</span>
+            <span class="badge bg-warning-subtle text-warning border border-warning p-2 cursor-pointer" onclick="sendQuickPrompt('What are the top 3 regulatory or technical risks I should prepare for?')">🛡️ Risk Mitigation</span>
+        </div>
+
+        <!-- Chat Output Messages -->
+        <div id="chat-messages" class="glass-card p-4 mb-3 overflow-auto" style="height: 420px;">
+            <div class="d-flex mb-3 justify-content-start">
+                <div class="glass-card p-3 rounded-4" style="max-width: 80%;">
+                    <div class="fw-bold mb-1 fs-7">🤖 AI Startup Mentor</div>
+                    <div>Hello <strong>{{ current_user.name }}</strong>! I am your 24/7 Virtual Startup Consultant powered by Generative AI. How can I help you validate, launch, or scale your active startup project today?</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chat-form">
+            <div class="input-group">
+                <input type="text" id="chat-input" class="form-control form-control-glass py-3" placeholder="Type your startup question here (e.g. How do I size my TAM/SAM market?)..." required>
+                <button type="submit" class="btn btn-gradient px-4">
+                    <i class="fa-solid fa-paper-plane me-1"></i> Send
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/mentor_chat.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    renderStartupSelectorHeader('active-startup-header-container');
+});
+
+function sendQuickPrompt(promptText) {
+    const input = document.getElementById('chat-input');
+    input.value = promptText;
+    document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+}
+</script>
+{% endblock %}

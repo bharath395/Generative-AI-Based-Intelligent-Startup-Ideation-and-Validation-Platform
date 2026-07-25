@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="glass-card p-4 p-md-5 animate-fade-in">
+                <div class="text-center mb-4">
+                    <i class="fa-solid fa-right-to-bracket text-gradient display-4 mb-2"></i>
+                    <h3 class="fw-bold">Student Login</h3>
+                    <p class="text-muted fs-6">Access your AI startup projects & mentor chat</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Email Address</label>
+                        <input type="email" id="email" class="form-control form-control-glass" placeholder="student@gmail.com" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Password</label>
+                        <input type="password" id="password" class="form-control form-control-glass" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember">
+                            <label class="form-check-label text-muted fs-7" for="remember">Remember me</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="btn btn-gradient w-100 py-2">
+                        Log In
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted fs-7 mb-0">Don't have an account? <a href="{{ url_for('views.register') }}" class="text-gradient fw-bold">Register here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Logging in...';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const remember = document.getElementById('remember').checked;
+
+    try {
+        const res = await API.post('/api/v1/login', { email, password, remember });
+        if (res.status === 'success') {
+            showAlert('Login successful! Redirecting...', 'success');
+            setTimeout(() => { window.location.href = "{{ url_for('views.dashboard') }}"; }, 800);
+        } else {
+            showAlert(res.error || 'Invalid credentials.', 'danger');
+            btn.disabled = false;
+            btn.innerText = 'Log In';
+        }
+    } catch (err) {
+        showAlert('Network error occurred.', 'danger');
+        btn.disabled = false;
+        btn.innerText = 'Log In';
+    }
+});
+</script>
+{% endblock %}

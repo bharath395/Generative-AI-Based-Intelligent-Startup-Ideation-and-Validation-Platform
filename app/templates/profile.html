@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Profile - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="glass-card p-4 p-md-5 animate-fade-in">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="stat-icon"><i class="fa-solid fa-id-card"></i></div>
+                    <div>
+                        <h3 class="fw-bold mb-0">Student Profile</h3>
+                        <p class="text-muted fs-6 mb-0">Manage your skills, department, and interest areas</p>
+                    </div>
+                </div>
+
+                <form id="profile-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Full Name</label>
+                        <input type="text" id="prof-name" class="form-control form-control-glass" value="{{ current_user.name }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email Address (Read-only)</label>
+                        <input type="email" class="form-control form-control-glass" value="{{ current_user.email }}" readonly disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Department / Branch</label>
+                        <input type="text" id="prof-dept" class="form-control form-control-glass" value="{{ current_user.department }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Technical Skills</label>
+                        <input type="text" id="prof-skills" class="form-control form-control-glass" value="{{ current_user.skills }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Primary Domain Interest</label>
+                        <input type="text" id="prof-interest" class="form-control form-control-glass" value="{{ current_user.interest }}">
+                    </div>
+
+                    <button type="submit" id="prof-save-btn" class="btn btn-gradient w-100 py-2 mt-3">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('prof-save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+
+    const name = document.getElementById('prof-name').value.trim();
+    const department = document.getElementById('prof-dept').value.trim();
+    const skills = document.getElementById('prof-skills').value.trim();
+    const interest = document.getElementById('prof-interest').value.trim();
+
+    try {
+        const res = await API.put('/api/v1/profile', { name, department, skills, interest });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Save Changes';
+
+        if (res.status === 'success') {
+            showAlert('Profile updated successfully!', 'success');
+        } else {
+            showAlert(res.error || 'Failed to update profile.', 'danger');
+        }
+    } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Save Changes';
+        showAlert('Network error updating profile.', 'danger');
+    }
+});
+</script>
+{% endblock %}

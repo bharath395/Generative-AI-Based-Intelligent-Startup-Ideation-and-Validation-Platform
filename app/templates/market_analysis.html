@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Market Analysis - Student Startup Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div id="active-startup-header-container"></div>
+
+    <div class="glass-card p-4 p-md-5 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-chart-line text-primary me-2"></i>AI Market Research & Sizing</h3>
+                <p class="text-muted fs-6 mb-0">Automated market trends, growth rate (CAGR), and customer demand score</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-glass btn-sm" onclick="location.reload()">
+                    <i class="fa-solid fa-arrows-rotate me-1"></i> Re-analyze Market
+                </button>
+                <button class="btn btn-gradient btn-sm" onclick="downloadStartupReport()">
+                    <i class="fa-solid fa-download me-1"></i> Download Report
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="glass-card p-3 text-center">
+                    <div class="text-muted fs-7 fw-semibold">Estimated Market Size</div>
+                    <div id="mkt-size" class="fs-3 fw-extrabold text-gradient">₹12.4 Crores</div>
+
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card p-3 text-center">
+                    <div class="text-muted fs-7 fw-semibold">Annual Growth (CAGR)</div>
+                    <div id="mkt-cagr" class="fs-3 fw-extrabold text-success">22.4%</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card p-3 text-center">
+                    <div class="text-muted fs-7 fw-semibold">Trend Score</div>
+                    <div id="mkt-trend" class="fs-3 fw-extrabold text-primary">88/100</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card p-3 text-center">
+                    <div class="text-muted fs-7 fw-semibold">Customer Demand</div>
+                    <div id="mkt-demand" class="fs-3 fw-extrabold text-warning">High Demand</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Industry Growth Valuation Trend (2023 - 2028)</h5>
+            <canvas id="market-growth-chart" height="120"></canvas>
+        </div>
+
+        <div class="glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-area me-2 text-primary"></i>Advanced Plotly Market Projection</h5>
+            <div id="plotly-market-chart" style="min-height: 320px;"></div>
+        </div>
+
+        <div class="glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-newspaper me-2 text-primary"></i>Live Market Signals & News</h5>
+            <div id="market-news-list" class="d-grid gap-2 text-muted fs-7">Loading live market signals...</div>
+        </div>
+
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-2"><i class="fa-solid fa-eye me-2 text-primary"></i>Future Scope & Opportunities</h5>
+            <p id="mkt-future" class="text-muted mb-0">
+                Rapidly expanding market opportunity fueled by enterprise adoption of generative AI agents, cloud APIs, and automated decision-making platforms across student innovation ecosystems.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    renderStartupSelectorHeader('active-startup-header-container', (selectedId) => {
+        loadAdvancedMarketInsights(selectedId);
+    });
+    renderMarketTrendChart('market-growth-chart');
+    loadAdvancedMarketInsights(getActiveStartupId());
+});
+
+async function loadAdvancedMarketInsights(startupId) {
+    try {
+        if (!startupId) {
+            const ideasRes = await API.get('/api/v1/ideas');
+            if (ideasRes.status === 'success' && ideasRes.ideas.length > 0) {
+                startupId = ideasRes.ideas[0].id;
+            } else return;
+        }
+
+        const marketRes = await API.get(`/api/v1/market-analysis/${startupId}`);
+        if (marketRes.status === 'success') {
+            const market = marketRes.market || marketRes;
+            document.getElementById('mkt-size').innerText = market.market_size || '$12.4 Billion';
+            document.getElementById('mkt-cagr').innerText = market.growth_rate || '22.4%';
+            document.getElementById('mkt-trend').innerText = `${market.trend_score || 88}/100`;
+            document.getElementById('mkt-demand').innerText = market.customer_demand || 'High Demand';
+            document.getElementById('mkt-future').innerText = market.future_scope || document.getElementById('mkt-future').innerText;
+        }
+
+        const insightsRes = await API.get(`/api/v1/market-insights/${startupId}`);
+        if (insightsRes.status !== 'success') return;
+
+        if (window.Plotly && insightsRes.plotly_chart) {
+            Plotly.newPlot(
+                'plotly-market-chart',
+                insightsRes.plotly_chart.data,
+                insightsRes.plotly_chart.layout,
+                { responsive: true, displayModeBar: false }
+            );
+        }
+
+        const newsList = document.getElementById('market-news-list');
+        if (insightsRes.news && insightsRes.news.length > 0) {
+            newsList.innerHTML = insightsRes.news.map(item => `
+                <div class="p-2 rounded border glass-card">
+                    <div class="fw-semibold text-gradient">${item.title || 'Market Signal'}</div>
+                    <small class="text-muted">${item.source || 'Market Source'}</small>
+                </div>
+            `).join('');
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+</script>
+{% endblock %}

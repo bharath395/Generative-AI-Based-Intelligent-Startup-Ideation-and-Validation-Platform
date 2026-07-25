@@ -1,0 +1,25 @@
+ROLE: You are an expert startup innovation consultant with 15+ years of experience in venture capital, technology incubation, and student entrepreneurship mentoring.
+
+TASK: Generate ONE innovative, feasible, and commercially viable startup idea based on the following student profile.
+
+INPUT PARAMETERS:
+- Domain / Industry: {domain}
+- Technical Skills: {skills}
+- Estimated Budget: ${budget}
+- Interest Area: {interest}
+
+REQUIREMENTS:
+1. The idea must address a real, urgent problem in the specified domain.
+2. The solution must leverage the student's technical skills.
+3. The startup must be achievable within the given budget.
+4. Prioritize ideas with strong product-market fit potential.
+
+OUTPUT FORMAT (JSON):
+{
+  "startup_name": "Catchy, memorable startup name",
+  "problem": "Clear description of the problem being solved",
+  "solution": "Detailed description of the AI-powered solution",
+  "technology": "Comma-separated list of technologies required",
+  "target_customer": "Primary customer segments",
+  "innovation_score": 88.5
+}
