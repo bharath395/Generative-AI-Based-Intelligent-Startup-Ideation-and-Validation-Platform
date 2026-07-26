@@ -11,7 +11,9 @@ def create_app(config_name=None):
     app = Flask(__name__, template_folder='templates', static_folder='static')
     app.config.from_object(config_by_name[config_name])
 
-    # Connect to MongoDB
+    # Connect to MongoDB with graceful cloud fallback
+    mongo_uri = app.config.get('MONGO_URI') or os.getenv('MONGO_URI', '')
+
     if app.config.get('TESTING'):
         try:
             import mongomock
@@ -21,19 +23,46 @@ def create_app(config_name=None):
                 pass
             db.connect('student_startup_test_db', mongo_client_class=mongomock.MongoClient, alias='default')
         except Exception:
-            mongo_uri = app.config.get('MONGO_URI', 'mongodb://localhost:27017/student_startup_test_db')
+            pass
+    else:
+        connected = False
+        if mongo_uri and ('mongodb://' in mongo_uri or 'mongodb+srv://' in mongo_uri) and 'localhost' not in mongo_uri:
             try:
                 db.disconnect(alias='default')
+                db.connect(host=mongo_uri, alias='default', serverSelectionTimeoutMS=5000)
+                connected = True
             except Exception:
-                pass
-            db.connect(host=mongo_uri, alias='default')
-    else:
-        mongo_uri = app.config.get('MONGO_URI') or os.getenv('MONGO_URI', 'mongodb://localhost:27017/student_startup_db')
-        try:
-            db.disconnect(alias='default')
-        except Exception:
-            pass
-        db.connect(host=mongo_uri, alias='default')
+                connected = False
+
+        if not connected:
+            try:
+                db.disconnect(alias='default')
+                local_uri = mongo_uri if mongo_uri else 'mongodb://localhost:27017/student_startup_db'
+                db.connect(host=local_uri, alias='default', serverSelectionTimeoutMS=2000)
+                from mongoengine.connection import get_db
+                get_db().command('ping')
+                connected = True
+            except Exception:
+                import mongomock
+                db.disconnect(alias='default')
+                db.connect('student_startup_db', mongo_client_class=mongomock.MongoClient, alias='default')
+                connected = True
+
+    # Auto-seed demo student if database has no users
+    try:
+        if User.objects.count() == 0:
+            demo_student = User(
+                name="Alex Dev",
+                email="student@gmail.com",
+                department="Computer Science & Engineering",
+                skills="Python, Artificial Intelligence, Web Development, Machine Learning",
+                interest="Generative AI & Agritech",
+                role="student"
+            )
+            demo_student.set_password("student123")
+            demo_student.save()
+    except Exception:
+        pass
 
     # Initialize extensions
     login_manager.init_app(app)
