@@ -81,3 +81,6 @@ def create_app(config_name=None):
         return jsonify({"status": "error", "error": "Internal Server Error", "status_code": 500}), 500
 
     return app
+
+
+app = create_app(os.getenv('FLASK_ENV', 'default'))
