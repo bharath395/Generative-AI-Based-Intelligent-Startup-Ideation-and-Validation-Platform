@@ -37,16 +37,19 @@ def create_app(config_name=None):
         if not connected:
             try:
                 db.disconnect(alias='default')
-                local_uri = mongo_uri if mongo_uri else 'mongodb://localhost:27017/student_startup_db'
-                db.connect(host=local_uri, alias='default', serverSelectionTimeoutMS=2000)
+                local_uri = mongo_uri if (mongo_uri and 'localhost' in mongo_uri) else 'mongodb://localhost:27017/student_startup_db'
+                db.connect(host=local_uri, alias='default', serverSelectionTimeoutMS=1000)
                 from mongoengine.connection import get_db
                 get_db().command('ping')
                 connected = True
             except Exception:
-                import mongomock
-                db.disconnect(alias='default')
-                db.connect('student_startup_db', mongo_client_class=mongomock.MongoClient, alias='default')
-                connected = True
+                try:
+                    import mongomock
+                    db.disconnect(alias='default')
+                    db.connect('student_startup_db', mongo_client_class=mongomock.MongoClient, alias='default')
+                    connected = True
+                except Exception:
+                    pass
 
     # Auto-seed demo student if database has no users
     try:
