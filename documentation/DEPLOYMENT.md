@@ -61,7 +61,7 @@ In the Render dashboard, go to **Environment** tab and add:
 | `NEWS_API_KEY` | *(your key)* | Optional |
 | `ENABLE_SENTENCE_TRANSFORMERS` | `0` | Optional — set `1` only when the host can download/load the embedding model |
 | `DISABLE_LIVE_AI` | `0` | Keep disabled for normal deployments |
-| `PYTHON_VERSION` | `3.12.0` | Ensures correct Python runtime |
+| `PYTHON_VERSION` | `3.11.9` | Ensures correct Python runtime |
 
 ---
 
