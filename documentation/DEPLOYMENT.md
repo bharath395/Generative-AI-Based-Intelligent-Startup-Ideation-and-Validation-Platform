@@ -53,16 +53,34 @@ git push -u origin main
 
 In the Render dashboard, go to **Environment** tab and add:
 
-| Key | Value | Notes |
-|---|---|---|
 | `SECRET_KEY` | *(auto-generated or custom string)* | Required for Flask sessions |
-| `MONGO_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/dbname` | MongoDB connection string (Atlas or self-hosted) |
+| `MONGO_URI` | `mongodb+srv://<username>:<password>@cluster0.xxx.mongodb.net/student_startup_db?retryWrites=true&w=majority` | Cloud MongoDB Atlas URI for persistent database storage |
 | `GEMINI_API_KEY` | *(your Google API key)* | Optional — heuristic mode works without it |
 | `GEMINI_MODEL` | `gemini-3.6-flash` | Current Gemini model used for live generation |
 | `NEWS_API_KEY` | *(your key)* | Optional |
 | `ENABLE_SENTENCE_TRANSFORMERS` | `0` | Optional — set `1` only when the host can download/load the embedding model |
 | `DISABLE_LIVE_AI` | `0` | Keep disabled for normal deployments |
 | `PYTHON_VERSION` | `3.11.9` | Ensures correct Python runtime |
+
+---
+
+## How to Set Up Persistent MongoDB (MongoDB Atlas — 100% Free)
+
+By default, if `MONGO_URI` is not set on Render, the app uses an in-memory database (`mongomock`) so the platform works out-of-the-box. However, in-memory data resets whenever Render sleeps or restarts. 
+
+To store registered users and startup projects **permanently**:
+
+1. Create a free account at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a **Free Shared Cluster (M0)**.
+3. Under **Database Access**, create a Database User (e.g., `admin`) and password.
+4. Under **Network Access**, click **Add IP Address** → select **Allow Access from Anywhere (`0.0.0.0/0`)**.
+5. Click **Database** → **Connect** → **Drivers** → Copy your connection string:
+   `mongodb+srv://<username>:<password>@cluster0.xxxxxx.mongodb.net/student_startup_db?retryWrites=true&w=majority`
+6. In your **Render Dashboard** → go to your Web Service → **Environment** tab:
+   - Add Environment Variable:
+     - **Key**: `MONGO_URI`
+     - **Value**: *(paste your connection string from step 5)*
+7. Click **Save Changes**. Render will automatically redeploy and your database will be **100% permanent**!
 
 ---
 
