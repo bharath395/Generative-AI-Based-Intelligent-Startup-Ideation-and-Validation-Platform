@@ -15,7 +15,6 @@ langchain==0.2.17
 chromadb==0.5.23
 sentence-transformers==3.0.1
 transformers==4.46.3
-tokenizers==0.20.3
 pytrends==4.9.2
 pandas==2.2.3
 numpy==1.26.4

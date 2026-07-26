@@ -1,10 +1,18 @@
-# Deployment Guide — Render Online Hosting
+# Deployment Guide — 100% Free Options (No Paid Features Required)
 
-This guide walks you through deploying the Student Startup Ideation & Validation Platform to **Render** (free tier).
+This guide walks you through deploying the Student Startup Ideation & Validation Platform using **completely free** hosting options.
 
 For the full free/open-source technology breakdown, see [Technology Cost & Free-Tier Breakdown](TECHNOLOGY_COST_BREAKDOWN.md).
 
 ---
+
+## ⚠️ Important: Render Blueprint (render.yaml) is Paid
+
+The `render.yaml` file in the project uses Render's **Blueprint** feature, which requires a **paid Render subscription**. Instead, use the **Manual Web Service** method below which works on Render's **Free Tier**.
+
+---
+
+# Option 1: Render (Free Tier — Manual Setup) ✅ Recommended
 
 ## Prerequisites
 
@@ -30,11 +38,13 @@ git push -u origin main
 
 ---
 
-## Step 2: Create a New Web Service on Render
+## Step 2: Create a New Web Service on Render (Manual — FREE)
+
+> **Note:** Do NOT use "Blueprint" — that requires payment. Use the manual Web Service method below.
 
 1. Log in to [dashboard.render.com](https://dashboard.render.com).
 2. Click **"New +"** → **"Web Service"**.
-3. Connect your GitHub account and select the repository.
+3. Connect your GitHub account and select your repository.
 4. Configure the service:
 
 | Setting | Value |
@@ -45,7 +55,7 @@ git push -u origin main
 | **Branch** | `main` |
 | **Build Command** | `pip install -r requirements.txt && python init_db.py` |
 | **Start Command** | `gunicorn run:app --config gunicorn.conf.py` |
-| **Instance Type** | Free |
+| **Instance Type** | **Free** ✅ |
 
 ---
 
@@ -53,15 +63,14 @@ git push -u origin main
 
 In the Render dashboard, go to **Environment** tab and add:
 
-| Key | Value | Notes |
+| Key | Value | Required? |
 |---|---|---|
-| `SECRET_KEY` | *(auto-generated or custom string)* | Required for Flask sessions |
-| `GEMINI_API_KEY` | *(your Google API key)* | Optional — heuristic mode works without it |
-| `GEMINI_MODEL` | `gemini-3.6-flash` | Current Gemini model used for live generation |
-| `NEWS_API_KEY` | *(your key)* | Optional |
-| `ENABLE_SENTENCE_TRANSFORMERS` | `0` | Optional — set `1` only when the host can download/load the embedding model |
-| `DISABLE_LIVE_AI` | `0` | Keep disabled for normal deployments |
-| `PYTHON_VERSION` | `3.12.0` | Ensures correct Python runtime |
+| `SECRET_KEY` | *(generate a random secure string)* | ✅ Required |
+| `GEMINI_API_KEY` | *(your Google Gemini API key)* | ⚠️ Optional — works without it |
+| `NEWS_API_KEY` | *(your NewsAPI key)* | ⚠️ Optional |
+| `ENABLE_SENTENCE_TRANSFORMERS` | `0` | ⚠️ Optional |
+| `DISABLE_LIVE_AI` | `0` | ⚠️ Optional |
+| `PYTHON_VERSION` | `3.12.0` | ✅ Recommended |
 
 ---
 
@@ -88,19 +97,104 @@ In the Render dashboard, go to **Environment** tab and add:
 
 ---
 
-## Alternative: One-Click Deploy with `render.yaml`
+# Option 2: PythonAnywhere (Free Tier) 🐍
 
-The project includes a `render.yaml` Infrastructure-as-Code file. To use it:
+PythonAnywhere offers a **free tier** perfect for Flask apps. No credit card required.
 
-1. Push the repository to GitHub.
-2. Go to [dashboard.render.com/select-repo](https://dashboard.render.com/select-repo).
-3. Click **"New Blueprint Instance"**.
-4. Select your repository — Render reads `render.yaml` automatically.
-5. Review settings and click **"Apply"**.
+## Step 1: Create Account
+- Go to [pythonanywhere.com](https://www.pythonanywhere.com) and sign up for a **Free** account.
+
+## Step 2: Upload Code
+- Open the **Dashboard** → **Files** tab.
+- Upload your project files (or clone from GitHub via the **Bash console**):
+  ```bash
+  git clone https://github.com/YOUR_USERNAME/student-startup-ai-platform.git
+  ```
+
+## Step 3: Set Up Virtual Environment
+- Open a **Bash console** from the Dashboard.
+- Run:
+  ```bash
+  cd student-startup-ai-platform
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  python init_db.py
+  ```
+
+## Step 4: Configure Web App
+- Go to **Web** tab → **Add a new web app**.
+- Choose **Manual configuration** → **Python 3.10**.
+- In the **Code** section:
+  - **Source code:** `/home/YOUR_USERNAME/student-startup-ai-platform`
+  - **Working directory:** `/home/YOUR_USERNAME/student-startup-ai-platform`
+  - **WSGI configuration file:** Click the link to edit, replace content with:
+
+```python
+import sys
+import os
+
+path = '/home/YOUR_USERNAME/student-startup-ai-platform'
+if path not in sys.path:
+    sys.path.append(path)
+
+os.environ['FLASK_ENV'] = 'production'
+os.environ['SECRET_KEY'] = 'your-secure-random-key-here'
+
+from app import create_app
+application = create_app('production')
+```
+
+> **Replace `YOUR_USERNAME`** with your actual PythonAnywhere username.
+
+- In **Environment variables** section (under Web tab), add:
+  - `FLASK_ENV` = `production`
+  - `SECRET_KEY` = `your-secure-random-string`
+  - `GEMINI_API_KEY` = `your-key` (optional)
+
+## Step 5: Reload
+- Click the green **Reload** button.
+- Your app will be live at: `https://YOUR_USERNAME.pythonanywhere.com`
 
 ---
 
-## Updating the Deployment
+# Option 3: Railway (Free Tier with Monthly Credits) 🚂
+
+Railway offers **$5 free credits monthly** — enough for a small Flask app.
+
+## Step 1: Create Account
+- Go to [railway.app](https://railway.app) and sign up with GitHub.
+
+## Step 2: Deploy
+- Click **New Project** → **Deploy from GitHub repo**.
+- Select your repository.
+- Add environment variables (same as Render list above).
+- Railway auto-detects Python and uses:
+  - **Build Command:** `pip install -r requirements.txt && python init_db.py`
+  - **Start Command:** `gunicorn run:app --config gunicorn.conf.py`
+
+## Step 3: Access
+- Railway provides a `.railway.app` URL automatically.
+
+---
+
+# Option 4: Koyeb (Free Tier) 🌍
+
+Koyeb offers a **free tier** with always-on instances (no sleep!).
+
+## Step 1: Create Account
+- Go to [koyeb.com](https://www.koyeb.com) and sign up with GitHub.
+
+## Step 2: Deploy
+- Click **Create App** → **Deploy from GitHub**.
+- Select your repository.
+- Set **Builder** to **Docker** or use these settings:
+  - **Run Command:** `gunicorn run:app --config gunicorn.conf.py`
+  - **Environment Variables:** Add same as Render list.
+
+---
+
+## Updating Your Deployment (Any Platform)
 
 After making code changes:
 
@@ -110,7 +204,10 @@ git commit -m "Update: description of changes"
 git push origin main
 ```
 
-Render auto-deploys on every push to `main` by default.
+- **Render:** Auto-deploys on push
+- **PythonAnywhere:** Open the Web tab and click **Reload**
+- **Railway:** Auto-deploys on push
+- **Koyeb:** Auto-deploys on push
 
 ---
 
@@ -119,10 +216,12 @@ Render auto-deploys on every push to `main` by default.
 | Issue | Solution |
 |---|---|
 | Build fails on `reportlab` | Ensure `requirements.txt` has `reportlab==4.2.2` |
+| Build fails on `tokenizers` / Rust compilation error | **Fix:** A `runtime.txt` file has been added to the project root with `python-3.12.0` to force Python 3.12. Render's default Python 3.14 doesn't have prebuilt wheels for `tokenizers`. Also `tokenizers==0.20.3` has been removed from `requirements.txt` — `transformers` will install a compatible version automatically. |
 | Database errors | Check that `init_db.py` runs in the build command |
-| 500 errors | Check Render logs; ensure `SECRET_KEY` is set |
+| 500 errors | Check platform logs; ensure `SECRET_KEY` is set |
 | AI features return heuristic data | Set `GEMINI_API_KEY` in environment variables |
-| Free tier sleep | Free Render services sleep after 15 min inactivity; first request takes ~30s to wake |
+| Render free tier sleep | Free Render services sleep after 15 min inactivity; first request takes ~30s to wake |
+| PythonAnywhere free tier limits | Outbound HTTP blocked on free tier (AI search/trends won't work); use Render instead if you need AI features |
 
 ---
 
@@ -132,6 +231,4 @@ Render auto-deploys on every push to `main` by default.
 - [x] Set `GEMINI_API_KEY` for live AI generation
 - [x] Verify `init_db.py` seeds the database
 - [x] Test all pages after deployment
-- [x] Verify advanced APIs for history, comparison, recommendations, progress, notifications, and admin analytics
-- [ ] (Optional) Add a custom domain in Render settings
-- [ ] (Optional) Upgrade to Render paid tier for persistent disk and no sleep
+- [ ] (Optional) Add a custom domain in hosting settings
