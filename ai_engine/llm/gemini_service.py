@@ -14,12 +14,17 @@ class GeminiService:
 
         self.api_key = api_key or os.getenv('GEMINI_API_KEY', '')
         self.model = os.getenv('GEMINI_MODEL', 'gemini-3.6-flash')
+        self.timeout_ms = int(os.getenv('GEMINI_TIMEOUT_MS', '15000'))
         self.client = None
         
         if self.api_key:
             try:
                 from google import genai
-                self.client = genai.Client(api_key=self.api_key)
+                from google.genai import types
+                self.client = genai.Client(
+                    api_key=self.api_key,
+                    http_options=types.HttpOptions(timeout=self.timeout_ms)
+                )
                 logger.info("Google Gemini Client initialized successfully.")
             except Exception as e:
                 logger.warning(f"Failed to initialize google-genai client: {e}. Falling back to AI heuristics mode.")
