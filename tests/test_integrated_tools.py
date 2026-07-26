@@ -12,7 +12,6 @@ from ai_engine.tools.news_tool import fetch_market_news
 from ai_engine.tools.search_tool import scrape_page_summary
 from ai_engine.tools.langchain_tools import LANGCHAIN_STARTUP_TOOLS
 from ai_engine.tools.trend_tool import fetch_google_trends_score
-from app.extensions import db
 from app.models import StartupProject, User
 from config import DATABASE_DIR, normalize_database_url
 
@@ -89,8 +88,8 @@ def test_market_insights_endpoint(client, app):
             skills='Python, AI',
         )
         user.set_password('password123')
-        db.session.add(user)
-        db.session.flush()
+        user.save()
+
         startup = StartupProject(
             user_id=user.id,
             startup_name='Insight AI',
@@ -100,8 +99,7 @@ def test_market_insights_endpoint(client, app):
             technology='Python, Flask, AI',
             target_customer='Students',
         )
-        db.session.add(startup)
-        db.session.commit()
+        startup.save()
 
         client.post('/api/v1/login', json={
             'email': 'insight@test.com',

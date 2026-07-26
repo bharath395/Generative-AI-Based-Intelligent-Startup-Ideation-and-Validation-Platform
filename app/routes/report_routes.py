@@ -1,7 +1,8 @@
+import os
 from flask import Blueprint, request, jsonify, send_file
 from flask_login import current_user, login_required
 from app.services.report_service import report_service
-from app.models import StartupProject
+from app.models import StartupProject, Report
 from app.routes.resource_utils import get_owned_report_or_404, get_owned_startup_or_404
 
 report_bp = Blueprint('report_api', __name__, url_prefix='/api/v1')
@@ -13,8 +14,7 @@ def generate_report():
     startup_id = data.get('startup_id')
     
     if not startup_id:
-        # Grab latest user project
-        latest = StartupProject.query.filter_by(user_id=current_user.id).order_by(StartupProject.id.desc()).first()
+        latest = StartupProject.objects(user_id=current_user.id).order_by('-id').first()
         if not latest:
             return jsonify({"status": "error", "error": "No startup project found to generate report for.", "status_code": 404}), 404
         startup_id = latest.id
@@ -34,13 +34,12 @@ def generate_report():
 @report_bp.route('/user-reports', methods=['GET'])
 @login_required
 def list_user_reports():
-    user_startups = StartupProject.query.filter_by(user_id=current_user.id).order_by(StartupProject.created_at.desc()).all()
+    user_startups = list(StartupProject.objects(user_id=current_user.id).order_by('-created_at'))
     if not user_startups:
         return jsonify({"status": "success", "reports": []}), 200
 
     startup_ids = [s.id for s in user_startups]
-    from app.models import Report
-    reports = Report.query.filter(Report.startup_id.in_(startup_ids)).order_by(Report.generated_date.desc()).all()
+    reports = list(Report.objects(startup_id__in=startup_ids).order_by('-generated_date'))
 
     result = []
     for s in user_startups:
@@ -79,7 +78,6 @@ def download_report_by_startup(startup_id):
 @login_required
 def download_report(report_id):
     report = get_owned_report_or_404(report_id)
-    import os
     if not os.path.exists(report.report_path):
         report = report_service.generate_startup_report(report.startup_id)
     return send_file(

@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify
 from flask_login import login_required
 from app.models import BusinessModel
 from app.routes.resource_utils import get_owned_startup_or_404
+from app.services.ai_service import safe_str
 
 business_bp = Blueprint('business_api', __name__, url_prefix='/api/v1')
 
@@ -9,11 +10,9 @@ business_bp = Blueprint('business_api', __name__, url_prefix='/api/v1')
 @login_required
 def get_business_model(startup_id):
     startup = get_owned_startup_or_404(startup_id)
-    bm = BusinessModel.query.filter_by(startup_id=startup_id).first()
+    bm = BusinessModel.objects(startup_id=startup.id).first()
     if not bm:
         from ai_engine.agents.business_agent import business_agent
-        from app.extensions import db
-        from app.services.ai_service import safe_str
         bm_data = business_agent.execute(startup.startup_name, startup.domain, startup.problem, startup.solution)
         bm = BusinessModel(
             startup_id=startup.id,
@@ -27,8 +26,6 @@ def get_business_model(startup_id):
             key_partners=safe_str(bm_data.get('key_partners'), "Google Gemini API, College Innovation Cells, Local Incubators"),
             cost_structure=safe_str(bm_data.get('cost_structure'), "Cloud AI API Tokens, Server Hosting & Maintenance")
         )
-        db.session.add(bm)
-        db.session.commit()
+        bm.save()
 
     return jsonify({"status": "success", "business_model": bm.to_dict()}), 200
-

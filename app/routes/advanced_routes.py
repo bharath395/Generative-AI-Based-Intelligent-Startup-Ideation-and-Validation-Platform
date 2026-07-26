@@ -30,10 +30,7 @@ def idea_comparison():
             "status_code": 400,
         }), 400
 
-    startups = StartupProject.query.filter(
-        StartupProject.id.in_(startup_ids),
-        StartupProject.user_id == current_user.id,
-    ).all()
+    startups = list(StartupProject.objects(id__in=startup_ids, user_id=current_user.id))
     if len(startups) != len(set(startup_ids)):
         return jsonify({
             "status": "error",

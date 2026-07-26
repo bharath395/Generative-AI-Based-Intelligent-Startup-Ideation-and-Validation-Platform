@@ -1,11 +1,12 @@
 import re
-from app.extensions import db
+import logging
 from app.models import (
     StartupProject, MarketAnalysis, CompetitorData, ValidationResult,
     BusinessModel, FinancialAnalysis
 )
 from ai_engine.agents.orchestrator import orchestrator
 
+logger = logging.getLogger(__name__)
 
 def safe_str(val, default=""):
     if val is None:
@@ -47,7 +48,6 @@ def safe_float(val, default=80.0):
 class AIService:
     @staticmethod
     def generate_and_save_startup(user_id, domain, budget="50000", target_customers="", business_type="", goal="", skills="", preferred_tech="", location=""):
-        # Run AI Multi-Agent Pipeline
         pipeline_res = orchestrator.run_full_pipeline(domain, budget, target_customers, business_type, goal, skills, preferred_tech, location)
         
         idea_data = pipeline_res.get('idea', {})
@@ -60,9 +60,8 @@ class AIService:
         swot_data = pipeline_res.get('swot', "")
 
         try:
-            # Save Startup Base Project
             startup = StartupProject(
-                user_id=user_id,
+                user_id=int(user_id),
                 startup_name=safe_str(idea_data.get('startup_name'), f"Smart {domain} Startup"),
                 domain=safe_str(domain, "Technology"),
                 problem=safe_str(idea_data.get('problem'), goal if goal else "Problem description unavailable"),
@@ -76,10 +75,8 @@ class AIService:
                 swot_analysis=safe_str(swot_data, ""),
                 innovation_score=safe_float(validation_data.get('innovation_score'), 88.0)
             )
-            db.session.add(startup)
-            db.session.flush() # Get startup.id
+            startup.save()
 
-            # Save Market Analysis
             market = MarketAnalysis(
                 startup_id=startup.id,
                 market_size=safe_str(market_data.get('market_size'), '$10B+'),
@@ -88,9 +85,8 @@ class AIService:
                 customer_demand=safe_str(market_data.get('customer_demand'), 'High'),
                 future_scope=safe_str(market_data.get('future_scope'), 'Rapid expansion')
             )
-            db.session.add(market)
+            market.save()
 
-            # Save Competitors
             if isinstance(competitors_list, list):
                 for comp in competitors_list:
                     if isinstance(comp, dict):
@@ -104,9 +100,8 @@ class AIService:
                             technology=safe_str(comp.get('technology'), 'Cloud'),
                             pricing=safe_str(comp.get('pricing'), '$99/mo')
                         )
-                        db.session.add(c_entry)
+                        c_entry.save()
 
-            # Save Validation Result
             val = ValidationResult(
                 startup_id=startup.id,
                 innovation_score=safe_float(validation_data.get('innovation_score'), 90.0),
@@ -117,9 +112,8 @@ class AIService:
                 overall_score=safe_float(validation_data.get('overall_score'), 86.0),
                 recommendation=safe_str(validation_data.get('recommendation'), 'Proceed to MVP development')
             )
-            db.session.add(val)
+            val.save()
 
-            # Save Business Model Canvas
             bm = BusinessModel(
                 startup_id=startup.id,
                 customer_segments=safe_str(bm_data.get('customer_segments'), "Target Audience"),
@@ -132,9 +126,8 @@ class AIService:
                 key_partners=safe_str(bm_data.get('key_partners'), "Cloud API Providers"),
                 cost_structure=safe_str(bm_data.get('cost_structure'), "Hosting & Maintenance")
             )
-            db.session.add(bm)
+            bm.save()
 
-            # Save Financial Analysis
             fin = FinancialAnalysis(
                 startup_id=startup.id,
                 development_cost=safe_float(fin_data.get('development_cost'), 15000.0),
@@ -145,15 +138,11 @@ class AIService:
                 roi=safe_float(fin_data.get('roi'), 182.6),
                 break_even_period=safe_str(fin_data.get('break_even_period'), '7 Months')
             )
-            db.session.add(fin)
+            fin.save()
 
-            db.session.commit()
             return startup, pipeline_res
         except Exception as e:
-            db.session.rollback()
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Database error during startup save: {e}")
+            logger.error(f"MongoDB save error during startup save: {e}")
             raise e
 
     @staticmethod
@@ -165,12 +154,11 @@ class AIService:
         target_customer = safe_str(idea_dict.get('target_customer'), target_customers if target_customers else "General Audience")
         innovation_score = safe_float(idea_dict.get('innovation_score'), 90.0)
 
-        # Run pipeline tailored for this specific selected idea
         pipeline_res = orchestrator.run_full_pipeline(domain, budget, target_customer, business_type, problem, skills, technology, location)
 
         try:
             startup = StartupProject(
-                user_id=user_id,
+                user_id=int(user_id),
                 startup_name=startup_name,
                 domain=safe_str(domain, "Technology"),
                 problem=problem,
@@ -184,10 +172,8 @@ class AIService:
                 swot_analysis=safe_str(pipeline_res.get('swot'), ""),
                 innovation_score=innovation_score
             )
-            db.session.add(startup)
-            db.session.flush()
+            startup.save()
 
-            # Save Market Analysis
             market_data = pipeline_res.get('market', {})
             market = MarketAnalysis(
                 startup_id=startup.id,
@@ -197,9 +183,8 @@ class AIService:
                 customer_demand=safe_str(market_data.get('customer_demand'), 'High'),
                 future_scope=safe_str(market_data.get('future_scope'), 'Rapid expansion')
             )
-            db.session.add(market)
+            market.save()
 
-            # Save Competitors
             competitors_list = pipeline_res.get('competitors', [])
             if isinstance(competitors_list, list):
                 for comp in competitors_list:
@@ -214,9 +199,8 @@ class AIService:
                             technology=safe_str(comp.get('technology'), 'Cloud'),
                             pricing=safe_str(comp.get('pricing'), '$99/mo')
                         )
-                        db.session.add(c_entry)
+                        c_entry.save()
 
-            # Save Validation Result
             validation_data = pipeline_res.get('validation', {})
             val = ValidationResult(
                 startup_id=startup.id,
@@ -228,9 +212,8 @@ class AIService:
                 overall_score=safe_float(validation_data.get('overall_score'), 86.0),
                 recommendation=safe_str(validation_data.get('recommendation'), 'Proceed to MVP development')
             )
-            db.session.add(val)
+            val.save()
 
-            # Save Business Model Canvas
             bm_data = pipeline_res.get('business_model', {})
             bm = BusinessModel(
                 startup_id=startup.id,
@@ -244,9 +227,8 @@ class AIService:
                 key_partners=safe_str(bm_data.get('key_partners'), "Google Gemini API & College Innovation Cells"),
                 cost_structure=safe_str(bm_data.get('cost_structure'), "Cloud Infrastructure & API Usage")
             )
-            db.session.add(bm)
+            bm.save()
 
-            # Save Financial Analysis
             fin_data = pipeline_res.get('financials', {})
             fin = FinancialAnalysis(
                 startup_id=startup.id,
@@ -258,13 +240,11 @@ class AIService:
                 roi=safe_float(fin_data.get('roi'), 182.6),
                 break_even_period=safe_str(fin_data.get('break_even_period'), '7 Months')
             )
-            db.session.add(fin)
+            fin.save()
 
-            db.session.commit()
             return startup, pipeline_res
         except Exception as e:
-            db.session.rollback()
+            logger.error(f"MongoDB save error in save_chosen_idea: {e}")
             raise e
 
 ai_service = AIService()
-

@@ -1,4 +1,3 @@
-from app.extensions import db
 from app.models import User
 from app.utils.security import sanitize_input
 
@@ -11,7 +10,7 @@ class AuthService:
         skills = sanitize_input(skills)
         interest = sanitize_input(interest)
 
-        existing = User.query.filter_by(email=email).first()
+        existing = User.objects(email=email).first()
         if existing:
             return None, "Email address is already registered."
 
@@ -24,15 +23,13 @@ class AuthService:
             role=role
         )
         user.set_password(password)
-
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         return user, None
 
     @staticmethod
     def authenticate_user(email, password):
         email = sanitize_input(email).lower()
-        user = User.query.filter_by(email=email).first()
+        user = User.objects(email=email).first()
         if user and user.check_password(password):
             return user
         return None

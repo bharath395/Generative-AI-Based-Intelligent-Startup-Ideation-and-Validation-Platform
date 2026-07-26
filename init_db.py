@@ -1,16 +1,14 @@
 from app import create_app
-from app.extensions import db
-from app.models import User, StartupProject, MarketAnalysis, CompetitorData, ValidationResult, BusinessModel, FinancialAnalysis
+from app.models import User
 from app.services.ai_service import ai_service
 
 def seed_database():
     app = create_app('development')
     with app.app_context():
-        print("Creating database schema...")
-        db.create_all()
+        print("Initializing MongoDB collections...")
 
         # Check if demo student exists
-        demo_student = User.query.filter_by(email="student@gmail.com").first()
+        demo_student = User.objects(email="student@gmail.com").first()
         if not demo_student:
             print("Seeding initial student account (student@gmail.com / student123)...")
             demo_student = User(
@@ -22,8 +20,7 @@ def seed_database():
                 role="student"
             )
             demo_student.set_password("student123")
-            db.session.add(demo_student)
-            db.session.commit()
+            demo_student.save()
 
             print("Generating initial seed startup project...")
             ai_service.generate_and_save_startup(
@@ -34,7 +31,7 @@ def seed_database():
                 interest="Smart Crop Yield Prediction"
             )
 
-        print("Database initialization complete! Saved to database/startup_platform.db")
+        print("MongoDB initialization complete!")
 
 if __name__ == '__main__':
     seed_database()

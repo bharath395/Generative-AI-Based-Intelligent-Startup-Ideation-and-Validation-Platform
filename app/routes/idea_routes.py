@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.services.ai_service import ai_service
-from app.models import StartupProject
+from app.models import (
+    StartupProject, MarketAnalysis, CompetitorData, ValidationResult,
+    BusinessModel, FinancialAnalysis, Report
+)
 from app.utils.validators import validate_idea_generation_payload
 
 idea_bp = Blueprint('idea_api', __name__, url_prefix='/api/v1')
@@ -90,7 +93,7 @@ def select_idea():
 @idea_bp.route('/ideas', methods=['GET'])
 @login_required
 def list_ideas():
-    startups = StartupProject.query.filter_by(user_id=current_user.id).order_by(StartupProject.created_at.desc()).all()
+    startups = StartupProject.objects(user_id=current_user.id).order_by('-created_at')
     return jsonify({
         "status": "success",
         "ideas": [s.to_dict() for s in startups]
@@ -102,7 +105,6 @@ def get_startup_detail(startup_id):
     from app.routes.resource_utils import get_owned_startup_or_404
     startup = get_owned_startup_or_404(startup_id)
     
-    # Parse skill_gap
     skill_gap_data = {}
     if startup.skill_gap:
         try:
@@ -111,16 +113,22 @@ def get_startup_detail(startup_id):
         except Exception:
             skill_gap_data = {"analysis_markdown": startup.skill_gap}
 
+    market_res = MarketAnalysis.objects(startup_id=startup.id).first()
+    val_res = ValidationResult.objects(startup_id=startup.id).first()
+    bm_res = BusinessModel.objects(startup_id=startup.id).first()
+    fin_res = FinancialAnalysis.objects(startup_id=startup.id).first()
+    comps = CompetitorData.objects(startup_id=startup.id)
+
     return jsonify({
         "status": "success",
         "startup": {
             **startup.to_dict(),
             "skill_gap_parsed": skill_gap_data,
-            "market_analysis": startup.market_analysis.to_dict() if startup.market_analysis else None,
-            "validation_result": startup.validation_result.to_dict() if startup.validation_result else None,
-            "business_model": startup.business_model.to_dict() if startup.business_model else None,
-            "financial_analysis": startup.financial_analysis.to_dict() if startup.financial_analysis else None,
-            "competitors": [c.to_dict() for c in startup.competitors] if startup.competitors else []
+            "market_analysis": market_res.to_dict() if market_res else None,
+            "validation_result": val_res.to_dict() if val_res else None,
+            "business_model": bm_res.to_dict() if bm_res else None,
+            "financial_analysis": fin_res.to_dict() if fin_res else None,
+            "competitors": [c.to_dict() for c in comps]
         }
     }), 200
 
@@ -128,7 +136,6 @@ def get_startup_detail(startup_id):
 @login_required
 def update_startup_domain(startup_id):
     from app.routes.resource_utils import get_owned_startup_or_404
-    from app.extensions import db
     startup = get_owned_startup_or_404(startup_id)
     data = request.get_json() or {}
     new_domain = data.get('domain', '').strip()
@@ -136,7 +143,7 @@ def update_startup_domain(startup_id):
         return jsonify({"status": "error", "error": "New domain name is required"}), 400
 
     startup.domain = new_domain
-    db.session.commit()
+    startup.save()
     return jsonify({
         "status": "success",
         "message": f"Domain updated to '{new_domain}' for '{startup.startup_name}'!",
@@ -149,18 +156,19 @@ def update_startup_domain(startup_id):
 @login_required
 def delete_startup(startup_id):
     from app.routes.resource_utils import get_owned_startup_or_404
-    from app.extensions import db
     startup = get_owned_startup_or_404(startup_id)
     try:
-        db.session.delete(startup)
-        db.session.commit()
+        MarketAnalysis.objects(startup_id=startup.id).delete()
+        CompetitorData.objects(startup_id=startup.id).delete()
+        ValidationResult.objects(startup_id=startup.id).delete()
+        BusinessModel.objects(startup_id=startup.id).delete()
+        FinancialAnalysis.objects(startup_id=startup.id).delete()
+        Report.objects(startup_id=startup.id).delete()
+        startup.delete()
+
         return jsonify({
             "status": "success",
             "message": f"Startup '{startup.startup_name}' deleted successfully."
         }), 200
     except Exception as e:
-        db.session.rollback()
         return jsonify({"status": "error", "error": str(e)}), 500
-
-
-

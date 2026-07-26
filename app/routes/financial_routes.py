@@ -9,7 +9,7 @@ financial_bp = Blueprint('financial_api', __name__, url_prefix='/api/v1')
 @login_required
 def get_financial_analysis(startup_id):
     get_owned_startup_or_404(startup_id)
-    fin = FinancialAnalysis.query.filter_by(startup_id=startup_id).first()
+    fin = FinancialAnalysis.objects(startup_id=int(startup_id)).first()
     if not fin:
         return jsonify({
             "status": "success",

@@ -1,33 +1,27 @@
 from collections import Counter
-
 from ai_engine.memory.memory_manager import memory_manager
 from app.models import (
     Report,
     StartupProject,
     User,
     ValidationResult,
+    MarketAnalysis,
+    BusinessModel,
+    FinancialAnalysis,
 )
-from app.extensions import db
-from sqlalchemy import desc, func
 
 
 class AdvancedService:
     @staticmethod
     def get_startup_history(user_id):
-        startups = StartupProject.query.filter_by(user_id=user_id).order_by(
-            StartupProject.created_at.desc()
-        ).all()
+        startups = StartupProject.objects(user_id=int(user_id)).order_by('-created_at')
         startup_ids = [startup.id for startup in startups]
 
         reports = []
         validations = []
         if startup_ids:
-            reports = Report.query.filter(Report.startup_id.in_(startup_ids)).order_by(
-                Report.generated_date.desc()
-            ).all()
-            validations = ValidationResult.query.filter(
-                ValidationResult.startup_id.in_(startup_ids)
-            ).all()
+            reports = Report.objects(startup_id__in=startup_ids).order_by('-generated_date')
+            validations = ValidationResult.objects(startup_id__in=startup_ids)
 
         return {
             "ideas": [startup.to_dict() for startup in startups],
@@ -40,7 +34,7 @@ class AdvancedService:
     def compare_startups(startups):
         rows = []
         for startup in startups:
-            validation = startup.validation_result
+            validation = ValidationResult.objects(startup_id=startup.id).first()
             innovation = validation.innovation_score if validation else startup.innovation_score
             market = validation.market_score if validation else 80.0
             technology = validation.technology_score if validation else 80.0
@@ -75,7 +69,7 @@ class AdvancedService:
         skills_text = (user.skills or "").lower()
         interest_text = (user.interest or "").lower()
         previous_domains = [
-            startup.domain for startup in StartupProject.query.filter_by(user_id=user.id).all()
+            startup.domain for startup in StartupProject.objects(user_id=user.id)
         ]
 
         candidates = [
@@ -124,32 +118,38 @@ class AdvancedService:
 
     @staticmethod
     def get_progress(startup):
+        market_analysis = MarketAnalysis.objects(startup_id=startup.id).first()
+        validation_result = ValidationResult.objects(startup_id=startup.id).first()
+        business_model = BusinessModel.objects(startup_id=startup.id).first()
+        financial_analysis = FinancialAnalysis.objects(startup_id=startup.id).first()
+        reports = Report.objects(startup_id=startup.id).first()
+
         stages = [
             ("idea_generation", 100, "Startup idea created"),
             (
                 "market_analysis",
-                100 if startup.market_analysis else 0,
-                "Market report available" if startup.market_analysis else "Market report pending",
+                100 if market_analysis else 0,
+                "Market report available" if market_analysis else "Market report pending",
             ),
             (
                 "validation",
-                100 if startup.validation_result else 0,
-                "Validation score calculated" if startup.validation_result else "Validation score pending",
+                100 if validation_result else 0,
+                "Validation score calculated" if validation_result else "Validation score pending",
             ),
             (
                 "business_plan",
-                100 if startup.business_model else 0,
-                "Business canvas ready" if startup.business_model else "Business canvas pending",
+                100 if business_model else 0,
+                "Business canvas ready" if business_model else "Business canvas pending",
             ),
             (
                 "financial_plan",
-                100 if startup.financial_analysis else 0,
-                "Financial analysis ready" if startup.financial_analysis else "Financial analysis pending",
+                100 if financial_analysis else 0,
+                "Financial analysis ready" if financial_analysis else "Financial analysis pending",
             ),
             (
                 "report",
-                100 if startup.reports else 0,
-                "PDF report generated" if startup.reports else "PDF report pending",
+                100 if reports else 0,
+                "PDF report generated" if reports else "PDF report pending",
             ),
         ]
         overall = round(sum(stage[1] for stage in stages) / len(stages), 1)
@@ -165,15 +165,11 @@ class AdvancedService:
 
     @staticmethod
     def get_notifications(user_id):
-        startups = StartupProject.query.filter_by(user_id=user_id).order_by(
-            StartupProject.created_at.desc()
-        ).limit(5).all()
+        startups = StartupProject.objects(user_id=int(user_id)).order_by('-created_at')[:5]
         startup_ids = [startup.id for startup in startups]
         reports = []
         if startup_ids:
-            reports = Report.query.filter(Report.startup_id.in_(startup_ids)).order_by(
-                Report.generated_date.desc()
-            ).limit(5).all()
+            reports = Report.objects(startup_id__in=startup_ids).order_by('-generated_date')[:5]
 
         notifications = []
         for startup in startups:
@@ -182,12 +178,12 @@ class AdvancedService:
                 "message": f"{startup.startup_name} is ready for validation review.",
                 "created_at": startup.created_at.isoformat() if startup.created_at else None,
             })
-            if startup.validation_result:
+            val = ValidationResult.objects(startup_id=startup.id).first()
+            if val:
                 notifications.append({
                     "type": "validation_updated",
-                    "message": f"Validation score updated to {startup.validation_result.overall_score}/100.",
-                    "created_at": startup.validation_result.created_at.isoformat()
-                    if startup.validation_result.created_at else None,
+                    "message": f"Validation score updated to {val.overall_score}/100.",
+                    "created_at": val.created_at.isoformat() if val.created_at else None,
                 })
 
         for report in reports:
@@ -201,25 +197,27 @@ class AdvancedService:
 
     @staticmethod
     def get_admin_dashboard():
-        total_users = User.query.count()
-        total_ideas = StartupProject.query.count()
-        generated_reports = Report.query.count()
-        average_score = db.session.query(
-            func.avg(ValidationResult.overall_score)
-        ).scalar() or 0
-        popular_domains = db.session.query(
-            StartupProject.domain,
-            func.count(StartupProject.id).label("count"),
-        ).group_by(StartupProject.domain).order_by(desc("count")).limit(5).all()
+        total_users = User.objects.count()
+        total_ideas = StartupProject.objects.count()
+        generated_reports = Report.objects.count()
+
+        validations = ValidationResult.objects()
+        scores = [v.overall_score for v in validations if v.overall_score is not None]
+        average_score = (sum(scores) / len(scores)) if scores else 0
+
+        projects = StartupProject.objects()
+        domain_counts = Counter([p.domain.strip() for p in projects if p.domain])
+        popular_domains = [
+            {"domain": domain, "count": count}
+            for domain, count in domain_counts.most_common(5)
+        ]
 
         return {
             "total_users": total_users,
             "total_startup_ideas": total_ideas,
             "average_validation_score": round(average_score, 1),
             "generated_reports": generated_reports,
-            "most_popular_domains": [
-                {"domain": domain, "count": count} for domain, count in popular_domains
-            ],
+            "most_popular_domains": popular_domains,
         }
 
 

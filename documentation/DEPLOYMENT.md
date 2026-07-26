@@ -56,6 +56,7 @@ In the Render dashboard, go to **Environment** tab and add:
 | Key | Value | Notes |
 |---|---|---|
 | `SECRET_KEY` | *(auto-generated or custom string)* | Required for Flask sessions |
+| `MONGO_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/dbname` | MongoDB connection string (Atlas or self-hosted) |
 | `GEMINI_API_KEY` | *(your Google API key)* | Optional — heuristic mode works without it |
 | `GEMINI_MODEL` | `gemini-3.6-flash` | Current Gemini model used for live generation |
 | `NEWS_API_KEY` | *(your key)* | Optional |

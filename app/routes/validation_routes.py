@@ -32,10 +32,9 @@ def validate_startup():
 @login_required
 def get_validation_result(startup_id):
     startup = get_owned_startup_or_404(startup_id)
-    val = ValidationResult.query.filter_by(startup_id=startup_id).first()
+    val = ValidationResult.objects(startup_id=startup.id).first()
     if not val:
         val_res = validation_agent.execute(startup.innovation_score or 90.0, 85.0, 80.0, 88.0)
-        from app.extensions import db
         val = ValidationResult(
             startup_id=startup.id,
             innovation_score=val_res['innovation_score'],
@@ -46,15 +45,12 @@ def get_validation_result(startup_id):
             overall_score=val_res['overall_score'],
             recommendation=val_res['recommendation']
         )
-        db.session.add(val)
-        db.session.commit()
+        val.save()
 
     val_dict = val.to_dict()
-    # Compute 2-line explanation dynamically
     val_dict['explanation'] = (
         f"• Strong overall score of {val.overall_score}/100 driven by high market viability ({val.market_score}%) and technical execution ({val.technology_score}%).\n"
         f"• Recommended action: {val.recommendation}"
     )
 
     return jsonify({"status": "success", "validation": val_dict, "validation_result": val_dict}), 200
-

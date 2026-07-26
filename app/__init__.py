@@ -11,24 +11,40 @@ def create_app(config_name=None):
     app = Flask(__name__, template_folder='templates', static_folder='static')
     app.config.from_object(config_by_name[config_name])
 
+    # Connect to MongoDB
+    if app.config.get('TESTING'):
+        try:
+            import mongomock
+            try:
+                db.disconnect(alias='default')
+            except Exception:
+                pass
+            db.connect('student_startup_test_db', mongo_client_class=mongomock.MongoClient, alias='default')
+        except Exception:
+            mongo_uri = app.config.get('MONGO_URI', 'mongodb://localhost:27017/student_startup_test_db')
+            try:
+                db.disconnect(alias='default')
+            except Exception:
+                pass
+            db.connect(host=mongo_uri, alias='default')
+    else:
+        mongo_uri = app.config.get('MONGO_URI') or os.getenv('MONGO_URI', 'mongodb://localhost:27017/student_startup_db')
+        try:
+            db.disconnect(alias='default')
+        except Exception:
+            pass
+        db.connect(host=mongo_uri, alias='default')
+
     # Initialize extensions
-    db.init_app(app)
     login_manager.init_app(app)
     cors.init_app(app)
 
-    with app.app_context():
-        db.create_all()
-        try:
-            from sqlalchemy import text
-            db.session.execute(text("ALTER TABLE market_analysis ADD COLUMN custom_trajectory TEXT"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
-
+        try:
+            return User.objects(id=int(user_id)).first()
+        except Exception:
+            return None
 
     # Register Blueprints
     from app.routes.view_routes import views_bp

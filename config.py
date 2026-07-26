@@ -34,12 +34,22 @@ def normalize_database_url(database_url):
     return database_url
 
 
+def get_mongo_uri():
+    uri = os.getenv('MONGO_URI') or os.getenv('MONGODB_URI') or os.getenv('MONGODB_URL')
+    if uri and (uri.startswith('mongodb://') or uri.startswith('mongodb+srv://')):
+        return uri
+    db_url = os.getenv('DATABASE_URL')
+    if db_url and (db_url.startswith('mongodb://') or db_url.startswith('mongodb+srv://')):
+        return db_url
+    return 'mongodb://localhost:27017/student_startup_db'
+
+
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'default-dev-secret-key-student-startup-platform-2026')
-    SQLALCHEMY_DATABASE_URI = normalize_database_url(
-        os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_DIR / "startup_platform.db"}')
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MONGO_URI = get_mongo_uri()
+    MONGODB_SETTINGS = {
+        'host': MONGO_URI
+    }
     
     # Gemini API Key
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
@@ -58,7 +68,10 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    MONGO_URI = 'mongodb://localhost:27017/student_startup_test_db'
+    MONGODB_SETTINGS = {
+        'host': MONGO_URI
+    }
     SECRET_KEY = 'test-secret-key'
 
 class ProductionConfig(Config):

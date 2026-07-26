@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request, abort
 from flask_login import login_required
 from app.models import CompetitorData
 from app.routes.resource_utils import get_owned_startup_or_404
+from app.services.ai_service import safe_str
 
 competitor_bp = Blueprint('competitor_api', __name__, url_prefix='/api/v1')
 
@@ -9,12 +10,10 @@ competitor_bp = Blueprint('competitor_api', __name__, url_prefix='/api/v1')
 @login_required
 def get_competitors(startup_id):
     startup = get_owned_startup_or_404(startup_id)
-    competitors = CompetitorData.query.filter_by(startup_id=startup_id).all()
+    competitors = list(CompetitorData.objects(startup_id=startup.id))
     
     if not competitors:
         from ai_engine.agents.competitor_agent import competitor_agent
-        from app.extensions import db
-        from app.services.ai_service import safe_str
         
         comp_list = []
         try:
@@ -84,23 +83,16 @@ def get_competitors(startup_id):
                         technology=safe_str(comp.get('technology'), 'Legacy Cloud'),
                         pricing=safe_str(comp.get('pricing'), '₹9,999/mo')
                     )
-                    db.session.add(c_entry)
-            db.session.commit()
-            competitors = CompetitorData.query.filter_by(startup_id=startup_id).all()
+                    c_entry.save()
+            competitors = list(CompetitorData.objects(startup_id=startup.id))
         except Exception:
-            db.session.rollback()
-
+            pass
 
     return jsonify({
         "status": "success",
         "competitors": [c.to_dict() for c in competitors]
     }), 200
 
-
-
-from flask import request
-from app.extensions import db
-from app.services.ai_service import safe_str
 
 @competitor_bp.route('/competitors/<int:startup_id>', methods=['POST'])
 @login_required
@@ -118,15 +110,16 @@ def add_competitor(startup_id):
         technology=safe_str(data.get('technology'), 'Cloud'),
         pricing=safe_str(data.get('pricing'), '$99/mo')
     )
-    db.session.add(c_entry)
-    db.session.commit()
+    c_entry.save()
     return jsonify({"status": "success", "message": "Competitor added successfully", "competitor": c_entry.to_dict()}), 201
 
 @competitor_bp.route('/competitors/<int:startup_id>/<int:comp_id>', methods=['PUT'])
 @login_required
 def update_competitor(startup_id, comp_id):
     startup = get_owned_startup_or_404(startup_id)
-    comp = CompetitorData.query.filter_by(id=comp_id, startup_id=startup.id).first_or_404()
+    comp = CompetitorData.objects(id=comp_id, startup_id=startup.id).first()
+    if not comp:
+        abort(404)
     data = request.get_json() or {}
 
     if 'company_name' in data: comp.company_name = safe_str(data['company_name'])
@@ -137,16 +130,15 @@ def update_competitor(startup_id, comp_id):
     if 'technology' in data: comp.technology = safe_str(data['technology'])
     if 'pricing' in data: comp.pricing = safe_str(data['pricing'])
 
-    db.session.commit()
+    comp.save()
     return jsonify({"status": "success", "message": "Competitor updated successfully", "competitor": comp.to_dict()}), 200
 
 @competitor_bp.route('/competitors/<int:startup_id>/<int:comp_id>', methods=['DELETE'])
 @login_required
 def delete_competitor(startup_id, comp_id):
     startup = get_owned_startup_or_404(startup_id)
-    comp = CompetitorData.query.filter_by(id=comp_id, startup_id=startup.id).first_or_404()
-    db.session.delete(comp)
-    db.session.commit()
+    comp = CompetitorData.objects(id=comp_id, startup_id=startup.id).first()
+    if not comp:
+        abort(404)
+    comp.delete()
     return jsonify({"status": "success", "message": "Competitor deleted successfully"}), 200
-
-

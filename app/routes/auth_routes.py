@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app.services.auth_service import auth_service
 from app.utils.validators import validate_registration_payload
-from app.extensions import db
 
 auth_bp = Blueprint('auth_api', __name__, url_prefix='/api/v1')
 
@@ -71,6 +70,6 @@ def profile():
     current_user.department = data.get('department', current_user.department)
     current_user.skills = data.get('skills', current_user.skills)
     current_user.interest = data.get('interest', current_user.interest)
-    db.session.commit()
+    current_user.save()
 
     return jsonify({"status": "success", "message": "Profile updated successfully", "user": current_user.to_dict()}), 200

@@ -1,6 +1,7 @@
+import json
 from pathlib import Path
 
-from flask import Blueprint, current_app, jsonify, url_for
+from flask import Blueprint, current_app, jsonify, url_for, request
 from flask_login import login_required
 from app.models import MarketAnalysis
 from app.routes.resource_utils import get_owned_startup_or_404
@@ -18,7 +19,7 @@ market_bp = Blueprint('market_api', __name__, url_prefix='/api/v1')
 @login_required
 def get_market_analysis(startup_id):
     startup = get_owned_startup_or_404(startup_id)
-    market = MarketAnalysis.query.filter_by(startup_id=startup_id).first()
+    market = MarketAnalysis.objects(startup_id=startup.id).first()
     if not market:
         return jsonify({
             "status": "success",
@@ -32,18 +33,13 @@ def get_market_analysis(startup_id):
     return jsonify({"status": "success", "market": market.to_dict()}), 200
 
 
-from flask import request
-from app.extensions import db
-import json
-
 @market_bp.route('/market-analysis/<int:startup_id>', methods=['PUT'])
 @login_required
 def update_market_analysis(startup_id):
     startup = get_owned_startup_or_404(startup_id)
-    market = MarketAnalysis.query.filter_by(startup_id=startup_id).first()
+    market = MarketAnalysis.objects(startup_id=startup.id).first()
     if not market:
-        market = MarketAnalysis(startup_id=startup_id)
-        db.session.add(market)
+        market = MarketAnalysis(startup_id=startup.id)
 
     data = request.get_json() or {}
     if 'market_size' in data:
@@ -58,7 +54,7 @@ def update_market_analysis(startup_id):
         traj = data['custom_trajectory']
         market.custom_trajectory = json.dumps(traj) if isinstance(traj, (dict, list)) else str(traj)
 
-    db.session.commit()
+    market.save()
     return jsonify({
         "status": "success",
         "message": f"Market analysis updated for '{startup.startup_name}'!",
@@ -70,17 +66,15 @@ def update_market_analysis(startup_id):
 @login_required
 def get_market_insights(startup_id):
     startup = get_owned_startup_or_404(startup_id)
-    market = MarketAnalysis.query.filter_by(startup_id=startup_id).first()
+    market = MarketAnalysis.objects(startup_id=startup.id).first()
     trend_data = fetch_google_trends_score(startup.domain, [startup.startup_name])
 
-    # Dynamic base value & growth rate unique per startup idea & domain (in ₹ Crores)
     domain_hash = abs(hash(startup.domain)) % 12
     base_val = round(3.5 + domain_hash + (startup.id * 1.4), 2)
     annual_growth = round(0.15 + ((startup.id % 4) * 0.06), 3)
 
     projection = build_market_projection(base_value=base_val, annual_growth=annual_growth)
     
-    # Override projection with custom_trajectory if set by user
     if market and market.custom_trajectory:
         try:
             custom_data = json.loads(market.custom_trajectory)
@@ -88,7 +82,6 @@ def get_market_insights(startup_id):
                 projection = custom_data
         except Exception:
             pass
-
 
     plotly_chart = build_plotly_market_projection(projection)
 
@@ -109,4 +102,3 @@ def get_market_insights(startup_id):
             filename=f"generated/market_projection_{startup.id}.png"
         ),
     }), 200
-

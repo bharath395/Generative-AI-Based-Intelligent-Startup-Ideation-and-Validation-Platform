@@ -4,17 +4,36 @@ import os
 os.environ['DISABLE_LIVE_AI'] = '1'
 
 from app import create_app
-from app.extensions import db
-from app.models import User
+from app.models import (
+    User, StartupProject, MarketAnalysis, CompetitorData,
+    ValidationResult, BusinessModel, FinancialAnalysis, Report, Feedback
+)
 
 @pytest.fixture
 def app():
     app = create_app('testing')
     with app.app_context():
-        db.create_all()
+        User.objects.delete()
+        StartupProject.objects.delete()
+        MarketAnalysis.objects.delete()
+        CompetitorData.objects.delete()
+        ValidationResult.objects.delete()
+        BusinessModel.objects.delete()
+        FinancialAnalysis.objects.delete()
+        Report.objects.delete()
+        Feedback.objects.delete()
+
         yield app
-        db.session.remove()
-        db.drop_all()
+
+        User.objects.delete()
+        StartupProject.objects.delete()
+        MarketAnalysis.objects.delete()
+        CompetitorData.objects.delete()
+        ValidationResult.objects.delete()
+        BusinessModel.objects.delete()
+        FinancialAnalysis.objects.delete()
+        Report.objects.delete()
+        Feedback.objects.delete()
 
 @pytest.fixture
 def client(app):
@@ -32,6 +51,5 @@ def auth_user(app):
             role="student"
         )
         user.set_password("password123")
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         return user

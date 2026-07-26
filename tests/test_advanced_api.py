@@ -1,7 +1,6 @@
 """
 Test Suite: Advanced APIs from the project blueprint.
 """
-from app.extensions import db
 from app.models import Report, StartupProject, User, ValidationResult
 
 
@@ -30,8 +29,8 @@ def _create_startup(user_id, name, domain, score):
         target_customer='Students',
         innovation_score=score,
     )
-    db.session.add(startup)
-    db.session.flush()
+    startup.save()
+
     validation = ValidationResult(
         startup_id=startup.id,
         innovation_score=score,
@@ -40,16 +39,15 @@ def _create_startup(user_id, name, domain, score):
         business_score=score,
     )
     validation.calculate_overall()
-    db.session.add(validation)
+    validation.save()
     return startup
 
 
 def test_startup_history_endpoint(client, app):
     with app.app_context():
         _login(client)
-        user = User.query.filter_by(email='advanced@test.com').first()
+        user = User.objects(email='advanced@test.com').first()
         _create_startup(user.id, 'AI Farm', 'Agriculture', 90)
-        db.session.commit()
 
         res = client.get('/api/v1/startup-history')
         data = res.get_json()
@@ -63,10 +61,9 @@ def test_startup_history_endpoint(client, app):
 def test_idea_comparison_recommends_best_owned_startup(client, app):
     with app.app_context():
         _login(client)
-        user = User.query.filter_by(email='advanced@test.com').first()
+        user = User.objects(email='advanced@test.com').first()
         first = _create_startup(user.id, 'AI Farm', 'Agriculture', 82)
         second = _create_startup(user.id, 'Health Bot', 'Healthcare', 91)
-        db.session.commit()
 
         res = client.post('/api/v1/idea-comparison', json={
             'startup_ids': [first.id, second.id],
@@ -81,15 +78,14 @@ def test_idea_comparison_recommends_best_owned_startup(client, app):
 def test_progress_and_notifications(client, app):
     with app.app_context():
         _login(client)
-        user = User.query.filter_by(email='advanced@test.com').first()
+        user = User.objects(email='advanced@test.com').first()
         startup = _create_startup(user.id, 'AI Farm', 'Agriculture', 90)
         report = Report(
             startup_id=startup.id,
             report_name='AI Farm Report',
             report_path='reports/ai_farm.pdf',
         )
-        db.session.add(report)
-        db.session.commit()
+        report.save()
 
         progress_res = client.get(f'/api/v1/progress/{startup.id}')
         notifications_res = client.get('/api/v1/notifications')
@@ -120,10 +116,8 @@ def test_project_ownership_blocks_cross_user_access(client, app):
             skills='Java',
         )
         other.set_password('password123')
-        db.session.add(other)
-        db.session.flush()
+        other.save()
         other_startup = _create_startup(other.id, 'Other Idea', 'FinTech', 80)
-        db.session.commit()
 
         _login(client)
         res = client.get(f'/api/v1/progress/{other_startup.id}')
