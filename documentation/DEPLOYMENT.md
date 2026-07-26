@@ -53,7 +53,7 @@ git push -u origin main
 | **Environment** | Python |
 | **Region** | Oregon (US West) or nearest |
 | **Branch** | `main` |
-| **Build Command** | `pip install -r requirements.txt && python init_db.py` |
+| **Build Command** | `pip install --prefer-binary -r requirements.txt && python init_db.py` |
 | **Start Command** | `gunicorn run:app --config gunicorn.conf.py` |
 | **Instance Type** | **Free** ✅ |
 
@@ -71,8 +71,6 @@ In the Render dashboard, go to **Environment** tab and add:
 | `ENABLE_SENTENCE_TRANSFORMERS` | `0` | ⚠️ Optional |
 | `DISABLE_LIVE_AI` | `0` | ⚠️ Optional |
 | `PYTHON_VERSION` | `3.12.0` | ✅ Recommended |
-
----
 
 ## Step 4: Deploy
 
@@ -118,7 +116,7 @@ PythonAnywhere offers a **free tier** perfect for Flask apps. No credit card req
   cd student-startup-ai-platform
   python -m venv venv
   source venv/bin/activate
-  pip install -r requirements.txt
+  pip install --prefer-binary -r requirements.txt
   python init_db.py
   ```
 
@@ -170,7 +168,7 @@ Railway offers **$5 free credits monthly** — enough for a small Flask app.
 - Select your repository.
 - Add environment variables (same as Render list above).
 - Railway auto-detects Python and uses:
-  - **Build Command:** `pip install -r requirements.txt && python init_db.py`
+  - **Build Command:** `pip install --prefer-binary -r requirements.txt && python init_db.py`
   - **Start Command:** `gunicorn run:app --config gunicorn.conf.py`
 
 ## Step 3: Access
@@ -216,7 +214,7 @@ git push origin main
 | Issue | Solution |
 |---|---|
 | Build fails on `reportlab` | Ensure `requirements.txt` has `reportlab==4.2.2` |
-| Build fails on `tokenizers` / Rust compilation error | **Fix:** A `runtime.txt` file has been added to the project root with `python-3.12.0` to force Python 3.12. Render's default Python 3.14 doesn't have prebuilt wheels for `tokenizers`. Also `tokenizers==0.20.3` has been removed from `requirements.txt` — `transformers` will install a compatible version automatically. |
+| Build fails on `tokenizers` / Rust compilation error | **Fix 1 (Recommended):** A `runtime.txt` file has been added to the project root with `python-3.12.0` to force Python 3.12. Render's default Python 3.14 doesn't have prebuilt wheels for `tokenizers`. **Fix 2:** Build command now uses `pip install --prefer-binary` to avoid compiling from source. If the issue persists, manually set `PYTHON_VERSION=3.12.0` in Render's Environment Variables. |
 | Database errors | Check that `init_db.py` runs in the build command |
 | 500 errors | Check platform logs; ensure `SECRET_KEY` is set |
 | AI features return heuristic data | Set `GEMINI_API_KEY` in environment variables |
