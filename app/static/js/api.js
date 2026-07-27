@@ -9,7 +9,12 @@ const API = {
         window.location.href = '/login';
         return { status: 'error', error: 'Session expired. Please log in again.' };
       }
-      return await res.json();
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return { status: 'error', error: 'Server error or invalid response format.' };
+      }
     } catch (err) {
       console.error('API GET Error:', err);
       return { status: 'error', error: err.message || 'Network error or server unreachable.' };
@@ -27,7 +32,12 @@ const API = {
         window.location.href = '/login';
         return { status: 'error', error: 'Session expired. Please log in again.' };
       }
-      return await res.json();
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return { status: 'error', error: 'Server error or invalid response format.' };
+      }
     } catch (err) {
       console.error('API POST Error:', err);
       return { status: 'error', error: err.message || 'Network error or server unreachable.' };
@@ -45,7 +55,12 @@ const API = {
         window.location.href = '/login';
         return { status: 'error', error: 'Session expired. Please log in again.' };
       }
-      return await res.json();
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return { status: 'error', error: 'Server error or invalid response format.' };
+      }
     } catch (err) {
       console.error('API PUT Error:', err);
       return { status: 'error', error: err.message || 'Network error or server unreachable.' };
@@ -62,7 +77,12 @@ const API = {
         window.location.href = '/login';
         return { status: 'error', error: 'Session expired. Please log in again.' };
       }
-      return await res.json();
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return { status: 'error', error: 'Server error or invalid response format.' };
+      }
     } catch (err) {
       console.error('API DELETE Error:', err);
       return { status: 'error', error: err.message || 'Network error or server unreachable.' };
