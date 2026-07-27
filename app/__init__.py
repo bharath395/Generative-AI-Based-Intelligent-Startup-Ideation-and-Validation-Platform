@@ -12,7 +12,8 @@ def create_app(config_name=None):
     app.config.from_object(config_by_name[config_name])
 
     # Connect to MongoDB with graceful cloud fallback
-    mongo_uri = app.config.get('MONGO_URI') or os.getenv('MONGO_URI', '')
+    raw_mongo_uri = app.config.get('MONGO_URI') or os.getenv('MONGO_URI', '') or ''
+    mongo_uri = raw_mongo_uri.strip().strip("'").strip('"').replace('\n', '').replace('\r', '')
 
     if app.config.get('TESTING'):
         try:

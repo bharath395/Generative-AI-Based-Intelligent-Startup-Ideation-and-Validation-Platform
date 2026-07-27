@@ -15,7 +15,8 @@ for directory in [DATABASE_DIR, REPORTS_DIR, LOGS_DIR]:
 
 
 def get_mongo_uri():
-    uri = os.getenv('MONGO_URI') or os.getenv('MONGODB_URI') or os.getenv('MONGODB_URL')
+    raw_uri = os.getenv('MONGO_URI') or os.getenv('MONGODB_URI') or os.getenv('MONGODB_URL') or ''
+    uri = raw_uri.strip().strip("'").strip('"').replace('\n', '').replace('\r', '')
     if uri and (uri.startswith('mongodb://') or uri.startswith('mongodb+srv://')):
         return uri
     return 'mongodb://localhost:27017/student_startup_db'
