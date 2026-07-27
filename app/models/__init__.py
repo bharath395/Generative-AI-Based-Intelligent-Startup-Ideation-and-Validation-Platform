@@ -7,13 +7,13 @@ class User(UserMixin, db.Document):
     meta = {'collection': 'users'}
 
     id = db.SequenceField(primary_key=True)
-    name = db.StringField(required=True, max_length=120)
-    email = db.StringField(required=True, unique=True, max_length=120)
-    password_hash = db.StringField(required=True, max_length=256)
-    department = db.StringField(default='Computer Science', max_length=100)
+    name = db.StringField(required=True)
+    email = db.StringField(required=True, unique=True)
+    password_hash = db.StringField(required=True)
+    department = db.StringField(default='Computer Science')
     skills = db.StringField(default='')
     interest = db.StringField(default='')
-    role = db.StringField(default='student', max_length=20) # student, mentor, admin
+    role = db.StringField(default='student') # student, mentor, admin
     created_at = db.DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     def set_password(self, password):
@@ -43,15 +43,15 @@ class StartupProject(db.Document):
 
     id = db.SequenceField(primary_key=True)
     user_id = db.IntField(required=True)
-    startup_name = db.StringField(required=True, max_length=150)
-    domain = db.StringField(required=True, max_length=100)
+    startup_name = db.StringField(required=True)
+    domain = db.StringField(required=True)
     problem = db.StringField(required=True)
     solution = db.StringField(required=True)
     technology = db.StringField(required=True)
     target_customer = db.StringField(required=True)
     goal = db.StringField()
-    business_type = db.StringField(max_length=100)
-    location = db.StringField(max_length=100)
+    business_type = db.StringField()
+    location = db.StringField()
     skill_gap = db.StringField()
     swot_analysis = db.StringField()
     innovation_score = db.FloatField(default=85.0)
@@ -82,10 +82,10 @@ class MarketAnalysis(db.Document):
 
     id = db.SequenceField(primary_key=True)
     startup_id = db.IntField(required=True)
-    market_size = db.StringField(default='$10B+', max_length=100)
-    growth_rate = db.StringField(default='18.5%', max_length=50)
+    market_size = db.StringField(default='$10B+')
+    growth_rate = db.StringField(default='18.5%')
     trend_score = db.FloatField(default=88.0)
-    customer_demand = db.StringField(default='High', max_length=50)
+    customer_demand = db.StringField(default='High')
     future_scope = db.StringField(default='Rapidly growing AI sector')
     custom_trajectory = db.StringField()
     created_at = db.DateTimeField(default=lambda: datetime.now(timezone.utc))
@@ -109,13 +109,13 @@ class CompetitorData(db.Document):
 
     id = db.SequenceField(primary_key=True)
     startup_id = db.IntField(required=True)
-    company_name = db.StringField(required=True, max_length=100)
-    product_name = db.StringField(required=True, max_length=100)
-    website = db.StringField(default='https://example.com', max_length=200)
+    company_name = db.StringField(required=True)
+    product_name = db.StringField(required=True)
+    website = db.StringField(default='https://example.com')
     strength = db.StringField(default='Strong brand presence')
     weakness = db.StringField(default='High price point & complex onboarding')
-    technology = db.StringField(default='Legacy Cloud APIs', max_length=100)
-    pricing = db.StringField(default='$99/mo', max_length=50)
+    technology = db.StringField(default='Legacy Cloud APIs')
+    pricing = db.StringField(default='$99/mo')
 
     def to_dict(self):
         return {
@@ -140,7 +140,7 @@ class ValidationResult(db.Document):
     market_score = db.FloatField(default=85.0)     # 30% weight
     technology_score = db.FloatField(default=80.0) # 25% weight
     business_score = db.FloatField(default=88.0)   # 20% weight
-    risk_score = db.StringField(default='Low', max_length=20)
+    risk_score = db.StringField(default='Low')
     overall_score = db.FloatField(default=86.15)
     recommendation = db.StringField(default='Proceed to MVP development')
     created_at = db.DateTimeField(default=lambda: datetime.now(timezone.utc))
@@ -211,7 +211,7 @@ class FinancialAnalysis(db.Document):
     revenue_prediction = db.FloatField(default=65000.0)
     profit_estimate = db.FloatField(default=42000.0)
     roi = db.FloatField(default=182.6) # Percentage
-    break_even_period = db.StringField(default='7 Months', max_length=50)
+    break_even_period = db.StringField(default='7 Months')
 
     def calculate_financials(self):
         total_initial_investment = self.development_cost + self.marketing_cost + self.operational_cost
@@ -241,9 +241,9 @@ class Report(db.Document):
 
     id = db.SequenceField(primary_key=True)
     startup_id = db.IntField(required=True)
-    report_name = db.StringField(required=True, max_length=150)
-    report_path = db.StringField(required=True, max_length=300)
-    report_type = db.StringField(default='PDF', max_length=50)
+    report_name = db.StringField(required=True)
+    report_path = db.StringField(required=True)
+    report_type = db.StringField(default='PDF')
     generated_date = db.DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):

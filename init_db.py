@@ -1,11 +1,16 @@
 from app import create_app
 from app.models import User
 from app.services.ai_service import ai_service
+from migrate_sqlite_to_mongodb import migrate
 
 def seed_database():
     app = create_app('development')
     with app.app_context():
         print("Initializing MongoDB collections...")
+        try:
+            migrate()
+        except Exception as e:
+            print(f"Notice: SQLite migration check: {e}")
 
         # Check if demo student exists
         demo_student = User.objects(email="student@gmail.com").first()
