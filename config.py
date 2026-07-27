@@ -2,12 +2,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-try:
-    import pymysql
-    pymysql.install_as_MySQLdb()
-except Exception:
-    pymysql = None
-
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / '.env')
 
@@ -20,27 +14,10 @@ for directory in [DATABASE_DIR, REPORTS_DIR, LOGS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def normalize_database_url(database_url):
-    if database_url and database_url.startswith('mysql://'):
-        return database_url.replace('mysql://', 'mysql+pymysql://', 1)
-    if database_url and database_url.startswith('sqlite:///'):
-        sqlite_path = database_url.replace('sqlite:///', '', 1)
-        if sqlite_path != ':memory:':
-            path = Path(sqlite_path)
-            if not path.is_absolute():
-                path = BASE_DIR / path
-            path.parent.mkdir(parents=True, exist_ok=True)
-            return f'sqlite:///{path.as_posix()}'
-    return database_url
-
-
 def get_mongo_uri():
     uri = os.getenv('MONGO_URI') or os.getenv('MONGODB_URI') or os.getenv('MONGODB_URL')
     if uri and (uri.startswith('mongodb://') or uri.startswith('mongodb+srv://')):
         return uri
-    db_url = os.getenv('DATABASE_URL')
-    if db_url and (db_url.startswith('mongodb://') or db_url.startswith('mongodb+srv://')):
-        return db_url
     return 'mongodb://localhost:27017/student_startup_db'
 
 

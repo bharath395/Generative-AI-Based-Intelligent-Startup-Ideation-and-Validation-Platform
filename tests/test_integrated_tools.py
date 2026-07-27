@@ -13,12 +13,7 @@ from ai_engine.tools.search_tool import scrape_page_summary
 from ai_engine.tools.langchain_tools import LANGCHAIN_STARTUP_TOOLS
 from ai_engine.tools.trend_tool import fetch_google_trends_score
 from app.models import StartupProject, User
-from config import DATABASE_DIR, normalize_database_url
-
-
-def test_mysql_url_normalization():
-    uri = normalize_database_url("mysql://user:pass@localhost/startup")
-    assert uri == "mysql+pymysql://user:pass@localhost/startup"
+from config import DATABASE_DIR
 
 
 def test_analytics_tools_generate_projection_and_charts(tmp_path):
